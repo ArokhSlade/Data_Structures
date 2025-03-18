@@ -182,9 +182,9 @@ void test_07(){
 	rb.add(1);
 	rb.add(-2);	
 
-	RBTree<int> *temp = rb;
+	RBTree<int> *temp = &rb;
 	temp->is_red = false;
-	temp = rb.find(-1)
+	temp = rb.find(-1);
 	
 	bool OK = true;
 	
