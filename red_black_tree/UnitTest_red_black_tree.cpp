@@ -175,7 +175,7 @@ void test_06(){
 }
 
 
-void test_06(){
+void test_07(){
 	RBTree<int> rb{0};	
 	
 	rb.add(-1);
@@ -212,6 +212,7 @@ int main() {
 	test_04();
 	test_05();
 	test_06();
+	test_07();
 	
 	
 	return 0;
