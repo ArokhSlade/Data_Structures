@@ -165,8 +165,8 @@ template <typename ValType>
 int black_height(RedBlackTree<ValType> *tree) {
 	int result = 1; //TODO: what's the black height of an empty tree? 1, if it's an empty leaf; 0, if it's an empty root?
 	if (!tree) return result;
-	result = is_red ? 0 : 1;
-	result += max(black_height(left), black_height(right));
+	result = tree->is_red ? 0 : 1;
+	result += max(black_height(tree->left), black_height(tree->right));
 		
 	return result;
 }
@@ -180,12 +180,12 @@ bool is_black(RedBlackTree<ValType> *tree) {
 }
 	
 template <typename ValType>
-int count_childred(RedBlackTree *tree) {
+int count_children(RedBlackTree<ValType> *tree) {
 	int result = 0;
 	
 	if (!tree) return result;
-	if (left) ++result;
-	if (right) ++result;
+	if (tree->left) ++result;
+	if (tree->right) ++result;
 	
 	return result;
 }	
@@ -195,17 +195,17 @@ bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 	
 	bool result = true;
 	
-	if (is_red) {
-		result &= left  ? !left->is_red  : true;
-		result &= right ? !right->is_red : true;
+	if (tree->is_red) {
+		result &= tree->left  ? !tree->left->is_red  : true;
+		result &= tree->right ? !tree->right->is_red : true;
 	}
 
-	result &= black_height(left) == black_height(right);
+	result &= black_height(tree->left) == black_height(tree->right);
 	
 	//NOTE: redundant, theoretically
 	if (is_black(tree) && count_children(tree) == 1) {
-		result &= is_black(left);
-		result &= is_black(right);
+		result &= is_black(tree->left);
+		result &= is_black(tree->right);
 	}
 	
 	return result;
