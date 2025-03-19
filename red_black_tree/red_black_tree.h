@@ -236,12 +236,11 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 		if (parent->left == this) {
 			//highest_changed = this
 		} else { // this is right child
-			if (!parent->left) {
+			if (!parent->left || is_black<Tval>(parent->left)) {
 				parent->rotate_left();
 				left->flip_colors_with_parent();
 				//highest_changed = this
-			} else {
-				assert(parent->left->is_red);
+			} else { //parent->left is red
 				parent->flip_colors_with_children();
 				highest_changed = parent->fix_up();
 			}
