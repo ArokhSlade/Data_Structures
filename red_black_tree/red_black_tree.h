@@ -13,54 +13,61 @@ T max(const T& a, const T& b) {
 	return result;
 }
 
-template<typename ValType>
+template<typename Tval>
 struct RedBlackTree {	
 	
-	bool is_red = false;
-	ValType value;
+	struct Node {
+		Tval value;
+		
+		Node *parent = nullptr;
+		Node *left = nullptr;
+		Node *right = nullptr;
+		
+		bool is_red = false;
+		
+		Node *find(Tval search_value);		
+		int count();		
+		Node *get_insertion_parent(Tval new_value);
+		void attach_child(Node *Node);
+		void append_leaf(Node *new_node);
+		void add(const Tval&);
+		void flip_colors_with_children();
+		void flip_colors_with_parent();
+		void rotate_right();
+		void rotate_left();
+		bool is_root();
+		void fix_up();
+		
+		//store contained values in order
+		Tval * inorder_to_buf(Tval *out);	
+		
+		Node(Tval value_) :value{value_}
+		{}
+	};
 	
-	RedBlackTree *parent = nullptr;
-	RedBlackTree *left = nullptr;
-	RedBlackTree *right = nullptr;
+	Node root;
 	
-	RedBlackTree(ValType value_)
-	:value(value_)
+	RedBlackTree(Tval value_)
+	:root(value_)
 	{}	
 	
-	RedBlackTree *find(ValType search_value);
-	
-	int count();
-	
-	RedBlackTree *get_insertion_parent(ValType new_value);
-	void attach_child(RedBlackTree *new_node);
-	void append_leaf(RedBlackTree *new_node);
-	void add(const ValType&);
-	void flip_colors_with_children();
-	void flip_colors_with_parent();
-	void rotate_right();
-	void rotate_left();
-	bool is_root();
-	void fix_up();
-	
-	//store contained values in order
-	ValType * inorder_to_buf(ValType *out);	
 	
 };
 
-// template<typename ValType>
-// using RedBlackTree = RedBlackTree<ValType>;
+// template<typename Tval>
+// using RedBlackTree = RedBlackTree<Tval>;
 
-template <typename ValType>
-int RedBlackTree<ValType>::count() {
+template <typename Tval>
+int RedBlackTree<Tval>::Node::count() {
 	int result = 1;
 	if (left) result += left->count();
 	if (right) result += right->count();
 	return result;
 }
 
-template<typename ValType>
-RedBlackTree<ValType> *RedBlackTree<ValType>::find(ValType search_value) {	
-	RedBlackTree *result = nullptr;
+template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::find(Tval search_value) {	
+	Node *result = nullptr;
 	if (value == search_value) {
 		result = this;
 	} else if (search_value < value) {
@@ -73,9 +80,9 @@ RedBlackTree<ValType> *RedBlackTree<ValType>::find(ValType search_value) {
 }
 
 
-template<typename ValType>
-ValType *RedBlackTree<ValType>::inorder_to_buf(ValType *out) {
-	ValType *next_slot = out;
+template<typename Tval>
+Tval *RedBlackTree<Tval>::Node::inorder_to_buf(Tval *out) {
+	Tval *next_slot = out;
 	
 	next_slot = left ? left -> inorder_to_buf(next_slot) : next_slot;
 	*next_slot++ = value;
@@ -88,10 +95,10 @@ ValType *RedBlackTree<ValType>::inorder_to_buf(ValType *out) {
 /**
  *  @return nullptr if already exists, pointer to parent otherwise
  */
-template<typename ValType>
-RedBlackTree<ValType> *RedBlackTree<ValType>::get_insertion_parent(ValType new_value) {
+template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_insertion_parent(Tval new_value) {
 	
-	RedBlackTree *result = nullptr;
+	RedBlackTree::Node *result = nullptr;
 	
 	if (value == new_value) {
 		result = nullptr;
@@ -105,8 +112,8 @@ RedBlackTree<ValType> *RedBlackTree<ValType>::get_insertion_parent(ValType new_v
 }
 
 
-template<typename ValType>
-void RedBlackTree<ValType>::attach_child(RedBlackTree *node) {
+template<typename Tval>
+void RedBlackTree<Tval>::Node::attach_child(RedBlackTree::Node *node) {
 	assert(node->value != value);
 	if (node->value < value) {
 		assert(left == nullptr);
@@ -121,25 +128,25 @@ void RedBlackTree<ValType>::attach_child(RedBlackTree *node) {
 }
 
 
-template<typename ValType>
-void RedBlackTree<ValType>::append_leaf(RedBlackTree *node){	
+template<typename Tval>
+void RedBlackTree<Tval>::Node::append_leaf(RedBlackTree::Node *node){	
 	//percolate down from root and attach to parent
 	
 	if (!node) return;
-	RedBlackTree *insertion_parent = get_insertion_parent( node->value );
+	RedBlackTree::Node *insertion_parent = get_insertion_parent( node->value );
 	insertion_parent->attach_child(node);
 	
 	return;
 }
 
-template<typename ValType>
-bool RedBlackTree<ValType>::is_root(){
+template<typename Tval>
+bool RedBlackTree<Tval>::Node::is_root(){
 	bool result = parent == nullptr;
 	return result;
 }
 
-template<typename ValType>
-void RedBlackTree<ValType>::flip_colors_with_parent(){
+template<typename Tval>
+void RedBlackTree<Tval>::Node::flip_colors_with_parent(){
 	assert(parent);
 	assert(is_red != parent->is_red);
 	
@@ -149,8 +156,8 @@ void RedBlackTree<ValType>::flip_colors_with_parent(){
 	return;
 }
 
-template<typename ValType>
-void RedBlackTree<ValType>::flip_colors_with_children(){
+template<typename Tval>
+void RedBlackTree<Tval>::Node::flip_colors_with_children(){
 	assert(left && right);
 	assert(left->is_red == right->is_red && left->is_red != is_red);
 	
@@ -160,9 +167,9 @@ void RedBlackTree<ValType>::flip_colors_with_children(){
 	return;
 }
 
-template<typename ValType>
-void RedBlackTree<ValType>::rotate_right(){
-	RedBlackTree<ValType> *old_parent = parent;
+template<typename Tval>
+void RedBlackTree<Tval>::Node::rotate_right(){
+	RedBlackTree<Tval>::Node *old_parent = parent;
 	assert(left);
 	parent = left;
 	left = parent->right;
@@ -184,9 +191,9 @@ void RedBlackTree<ValType>::rotate_right(){
 	return;
 }
 
-template<typename ValType>
-void RedBlackTree<ValType>::rotate_left(){
-	RedBlackTree<ValType> *old_parent = parent;
+template<typename Tval>
+void RedBlackTree<Tval>::Node::rotate_left(){
+	RedBlackTree<Tval>::Node *old_parent = parent;
 	assert(right);
 	parent = right;
 	right = parent->left;
@@ -207,15 +214,15 @@ void RedBlackTree<ValType>::rotate_left(){
 	return;
 }
 
-template<typename ValType>
-void RedBlackTree<ValType>::fix_up() {	
+template<typename Tval>
+void RedBlackTree<Tval>::Node::fix_up() {	
 	assert(is_red);	
 	if (is_root()) {
 		is_red = false;
 		return;
 	}
 	assert(parent);
-	if (is_black(parent)) {
+	if (is_black<Tval>(parent)) {
 		if (parent->left == this) {
 			return;
 		} else { // this is right child
@@ -245,12 +252,12 @@ void RedBlackTree<ValType>::fix_up() {
 }
 
 
-template<typename ValType>
-void RedBlackTree<ValType>::add(const ValType& new_val) {
+template<typename Tval>
+void RedBlackTree<Tval>::Node::add(const Tval& new_val) {
 	
 	if (find(new_val)) return;
-	RedBlackTree *new_node = new RedBlackTree{new_val};
-	new_node->is_red = true;	
+	RedBlackTree::Node *new_node = new RedBlackTree::Node{new_val};
+	new_node->is_red = true;
 	append_leaf( new_node );
 	new_node->fix_up();
 	
@@ -258,25 +265,25 @@ void RedBlackTree<ValType>::add(const ValType& new_val) {
 }
 
 
-template <typename ValType>
-int get_shortest_path_length(RedBlackTree<ValType> *tree) {
+template <typename Tval>
+int get_shortest_path_length(typename RedBlackTree<Tval>::Node *tree) {
 	if (!tree) return 0;
-	int shortest = 1 + min<int>(get_shortest_path_length(tree->left), get_shortest_path_length(tree->right));
+	int shortest = 1 + min<int>(get_shortest_path_length<Tval>(tree->left), get_shortest_path_length<Tval>(tree->right));
 	return shortest;
 }
 
 
-template <typename ValType>
-int get_longest_path_length(RedBlackTree<ValType> *tree) {
+template <typename Tval>
+int get_longest_path_length(typename RedBlackTree<Tval>::Node *tree) {
 	
 	if (!tree) return 0;
-	int longest = 1 + max<int>(get_longest_path_length<ValType>(tree->left), get_longest_path_length<ValType>(tree->right));
+	int longest = 1 + max<int>(get_longest_path_length<Tval>(tree->left), get_longest_path_length<Tval>(tree->right));
 	
 	return longest;	
 }
 
-template <typename ValType>
-int black_height(RedBlackTree<ValType> *tree) {
+template <typename Tval>
+int black_height(typename RedBlackTree<Tval>::Node *tree) {
 	//NOTE(Gerald): empty children of a red node count as black. but an empty tree has height 0.
 	//thus, this will give the wrong result for empty trees.
 	//to fix this we could make this a member function. then we can test for parent != null.
@@ -288,15 +295,15 @@ int black_height(RedBlackTree<ValType> *tree) {
 	return result;
 }
 
-template <typename ValType>
-bool is_black(RedBlackTree<ValType> *tree) {
+template <typename Tval>
+bool is_black(typename RedBlackTree<Tval>::Node *tree) {
 	if (!tree) return true; //empty children count as black
 	bool result = !tree->is_red;
 	return result;
 }
 	
-template <typename ValType>
-int count_children(RedBlackTree<ValType> *tree) {
+template <typename Tval>
+int count_children(typename RedBlackTree<Tval>::Node *tree) {
 	//counts only non-empty children
 	int result = 0;
 	
@@ -307,11 +314,10 @@ int count_children(RedBlackTree<ValType> *tree) {
 	return result;
 }	
 
-template <typename ValType>
+template <typename Tval>
 //the name is misleading. the argument implies as much. the point is to check for validity
 //TODO(Gerald, 2025 03 19): this function has multiple issues. revise.
-
-bool is_red_black_tree(RedBlackTree<ValType> *tree) {
+bool is_red_black_tree(typename RedBlackTree<Tval>::Node *tree) {
 	
 	bool result = true;
 	
@@ -332,16 +338,16 @@ bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 }
 
 
-template <typename ValType>
-void print(ValType value) {	
+template <typename Tval>
+void print(Tval value) {	
 	assert(false);
 	return;
 }
 
 
-template <typename ValType> 
-void print(RedBlackTree<ValType> *tree) {
-	print_red_black_tree<ValType>(tree);
+template <typename Tval> 
+void print(typename RedBlackTree<Tval>::Node *tree) {
+	print_red_black_tree_node<Tval>(tree);
 }
 
 template <> void print(char c) {
@@ -350,6 +356,11 @@ template <> void print(char c) {
 
 template <> void print(int i) {
 	printf("%d",i);
+}
+
+template <typename Tval>
+void print(RedBlackTree<Tval> *tree) {
+	print_red_black_tree_node<Tval>(&tree->root);
 }
 
 
@@ -363,8 +374,8 @@ template <> void print(int i) {
   |5
 |-5
 */
-template <typename ValType>
-void print_red_black_tree(RedBlackTree<ValType> *tree, int indent = 0) {
+template <typename Tval>
+void print_red_black_tree_node(typename RedBlackTree<Tval>::Node *tree, int indent = 0) {
 	if (!tree) {
 		return;
 	}
@@ -383,8 +394,8 @@ void print_red_black_tree(RedBlackTree<ValType> *tree, int indent = 0) {
 	print(tree->value);
 	print('\n');
 	
-	print_red_black_tree(tree->left, indent+1);
-	print_red_black_tree(tree->right, indent+1);
+	print_red_black_tree_node<Tval>(tree->left, indent+1);
+	print_red_black_tree_node<Tval>(tree->right, indent+1);
 	
 	return;
 }
