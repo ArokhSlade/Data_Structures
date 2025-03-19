@@ -212,9 +212,23 @@ void test_07(){
 	cout << "\n";
 }
 
-void test_09(){
+void test_08(){
 	
 	int values[] = {0,-10};
+	RBTree<int> rb{values[0]};
+	
+	for (int i = 1 ; i < array_count(values) ; i++) {
+		rb.add(values[i]);
+	}	
+	
+	cout << "test: red node\n";
+	cout << array_to_string(values, array_count(values)) << '\n';
+	print(&rb);
+}
+
+void test_09(){
+	
+	int values[] = {0,-10,5,-6,3,8,-5};
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
@@ -226,16 +240,30 @@ void test_09(){
 	print(&rb);
 }
 
-void test_08(){
+void test_10(){
 	
-	int values[] = {0,-10,5,-6,3,8,-5};
+	int values[] = {'S','E','A','R','C','H','E','X','A','M','P','L','E'};
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
 		rb.add(values[i]);
 	}	
 	
-	cout << "test: red node\n";
+	cout << "test: \n";
+	cout << array_to_string(values, array_count(values)) << '\n';
+	print(&rb);
+}
+
+void test_11(){
+	
+	int values[] = {'A','C','E','H','L','M','P','R','S','X'};
+	RBTree<int> rb{values[0]};
+	
+	for (int i = 1 ; i < array_count(values) ; i++) {
+		rb.add(values[i]);
+	}	
+	
+	cout << "test: \n";
 	cout << array_to_string(values, array_count(values)) << '\n';
 	print(&rb);
 }
@@ -255,6 +283,8 @@ int main() {
 	test_07();
 	test_08();
 	test_09();
+	test_10();
+	test_11();
 	
 	
 	return 0;
