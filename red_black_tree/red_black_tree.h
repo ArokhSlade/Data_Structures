@@ -265,6 +265,9 @@ void print_red_black_tree(RedBlackTree<ValType> *tree, int indent = 0) {
 		print('|');
 	}
 	
+	if(tree->is_red) {
+		print('*');
+	}
 	print(tree->value);
 	print('\n');
 	
