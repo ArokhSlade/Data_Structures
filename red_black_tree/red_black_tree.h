@@ -35,11 +35,16 @@ struct RedBlackTree {
 	void attach_child(RedBlackTree *new_node);
 	void append_leaf(RedBlackTree *new_node);
 	void add(const ValType&);
+	void flip_colors_with_children();
+	void flip_colors_with_parent();
+	void rotate_right();
+	void rotate_left();
+	bool is_root();
+	void fix_up();
 	
 	//store contained values in order
 	ValType * inorder_to_buf(ValType *out);	
 	
-	void fix_upwards_from(RedBlackTree *);
 };
 
 // template<typename ValType>
@@ -126,10 +131,110 @@ void RedBlackTree<ValType>::append_leaf(RedBlackTree *node){
 	return;
 }
 
+template<typename ValType>
+bool RedBlackTree<ValType>::is_root(){
+	bool result = parent == nullptr;
+	return result;
+}
 
 template<typename ValType>
-void RedBlackTree<ValType>::fix_upwards_from(RedBlackTree *) {	
+void RedBlackTree<ValType>::flip_colors_with_parent(){
+	assert(parent);
+	assert(is_red != parent->is_red);
 	
+	parent->is_red = is_red;
+	is_red = !is_red;
+	
+	return;
+}
+
+template<typename ValType>
+void RedBlackTree<ValType>::flip_colors_with_children(){
+	assert(left && right);
+	assert(left->is_red == right->is_red && left->is_red != is_red);
+	
+	left->is_red = right->is_red = is_red;
+	is_red = !is_red;	
+	
+	return;
+}
+
+template<typename ValType>
+void RedBlackTree<ValType>::rotate_right(){
+	RedBlackTree<ValType> *old_parent = parent;
+	
+	parent = left;
+	left = parent->right;
+	left->parent = this;
+	left->right = this;
+	
+	parent->parent = old_parent;
+	if (old_parent) {
+		if (old_parent->left == this) {
+			old_parent->left = parent;
+		} else {
+			assert(old_parent->right == this);
+			old_parent->right = parent;
+		}
+	}	
+	
+	return;
+}
+
+template<typename ValType>
+void RedBlackTree<ValType>::rotate_left(){
+	RedBlackTree<ValType> *old_parent = parent;
+	parent = right;
+	right = parent->left;
+	right->parent = this;	
+	parent->left = this;
+	
+	parent->parent = old_parent;
+	if(old_parent) {
+		if (old_parent->left == this){
+			old_parent->left = parent;
+		} else {
+			assert(old_parent->right == this);
+			old_parent->right = parent;
+		}
+	}
+	return;
+}
+
+template<typename ValType>
+void RedBlackTree<ValType>::fix_up() {	
+	assert(is_red);	
+	if (is_root()) {
+		is_red = false;
+		return;
+	}
+	assert(parent);
+	if (is_black(parent)) {
+		if (parent->left == this) {
+			return;
+		} else { // this is right child
+			if (!parent->left) {
+				parent->rotate_left();
+				left->flip_colors_with_parent();
+			} else {
+				assert(parent->left->is_red);
+				parent->flip_colors_with_children();
+				parent->fix_up();
+			}
+		}		
+	} else { //parent is red
+		if (parent->left == this) {			
+			assert(parent->parent);
+			parent->parent->rotate_right();
+			is_red = false;
+			parent->fix_up();
+		} else { // this is right child
+			parent->rotate_left();
+			parent->rotate_right();
+			left->is_red = false;
+			fix_up();
+		}
+	}
 	return;
 }
 
@@ -139,8 +244,9 @@ void RedBlackTree<ValType>::add(const ValType& new_val) {
 	
 	if (find(new_val)) return;
 	RedBlackTree *new_node = new RedBlackTree{new_val};
+	new_node->is_red = true;	
 	append_leaf( new_node );
-	fix_upwards_from(new_node);
+	new_node->fix_up();
 	
 	return;
 }
