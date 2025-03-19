@@ -33,7 +33,7 @@ using std::cout;
 void test_01() {
 	int test_value = 1;
 	RBTree<int> rb{test_value};
-	Node<int> *root = rb.root.find(test_value);
+	Node<int> *root = rb.root->find(test_value);
 	
 	bool OK = true;
 	OK &= root != nullptr;
@@ -50,11 +50,11 @@ void test_01() {
 void test_02() {
 	int test_value = 1;
 	RBTree<int> rb{test_value};	
-	rb.root.add(-1);
+	rb.root->add(-1);
 		
 	bool OK = true;
-	OK &= rb.root.find(1) != nullptr;	
-	OK &= rb.root.find(-1) != nullptr;
+	OK &= rb.root->find(1) != nullptr;	
+	OK &= rb.root->find(-1) != nullptr;
 	
 	cout << "test: add and find 2 elements\n";
 	cout << (OK ? "OK" : "ERROR") << "\n";	
@@ -67,18 +67,18 @@ void test_02() {
 void test_03() {
 	int test_value = 0;
 	RBTree<int> rb{test_value};
-	rb.root.add(-1);
-	rb.root.add(1);
+	rb.root->add(-1);
+	rb.root->add(1);
 		
 	bool OK = true;
-	OK &= rb.root.find(0) != nullptr;	
-	OK &= rb.root.find(-1) != nullptr;
-	OK &= rb.root.find(1) != nullptr;	
+	OK &= rb.root->find(0) != nullptr;	
+	OK &= rb.root->find(-1) != nullptr;
+	OK &= rb.root->find(1) != nullptr;	
 	
 	int exp[] = {-1,0,1};
 	int out[ array_count(exp) ];
 	
-	rb.root.inorder_to_buf(out);
+	rb.root->inorder_to_buf(out);
 	for (int i = 0 ; i < array_count(out) ; ++i) {
 		OK &= out[i] == exp[i];
 	}	
@@ -97,11 +97,11 @@ void test_03() {
 void test_04(){
 	RBTree<int> rb{0};
 	
-	rb.root.add(0);
-	rb.root.add(1);
-	rb.root.add(1);
-	rb.root.add(-1);
-	rb.root.add(-1);
+	rb.root->add(0);
+	rb.root->add(1);
+	rb.root->add(1);
+	rb.root->add(-1);
+	rb.root->add(-1);
 	
 	bool OK = true;
 
@@ -109,9 +109,9 @@ void test_04(){
 	int exp[] = {-1,0,1};
 	int out[ 6 ];
 	
-	rb.root.inorder_to_buf(out);
+	rb.root->inorder_to_buf(out);
 	
-	int rb_count = rb.root.count();
+	int rb_count = rb.root->count();
 	OK &= rb_count == 3;
 	
 	for (int i = 0 ; i < rb_count ; ++i) {
@@ -129,11 +129,11 @@ void test_04(){
 void test_05(){
 	RBTree<int> rb{0};
 	
-	rb.root.add(14);
-	rb.root.add(5);
-	rb.root.add(-1);
-	rb.root.add(-3);	
-	rb.root.add(8);	
+	rb.root->add(14);
+	rb.root->add(5);
+	rb.root->add(-1);
+	rb.root->add(-3);	
+	rb.root->add(8);	
 	
 	bool OK = true;
 
@@ -141,7 +141,7 @@ void test_05(){
 	int exp[] = {-3,-1,0,5,8,14};
 	int out[ array_count(exp) ];
 	
-	rb.root.inorder_to_buf(out);
+	rb.root->inorder_to_buf(out);
 	
 	cout << "test: add 6 elements unsorted, and output the values in-order\n";
 	cout << "result  : " << array_to_string<int>(out, array_count(out)) << "\n";
@@ -153,19 +153,19 @@ void test_06(){
 	RBTree<int> rb{0};	
 	print(&rb);
 	cout << "---\n";
-	rb.root.add(-1);
+	rb.root->add(-1);
 	print(&rb);
 	cout << "---\n";
-	rb.root.add(-2);
+	rb.root->add(-2);
 	print(&rb);
 	cout << "---\n";
-	rb.root.add(-3);
+	rb.root->add(-3);
 	print(&rb);	
 	cout << "---\n";
-	rb.root.add(-4);
+	rb.root->add(-4);
 	print(&rb);
 	cout << "---\n";
-	rb.root.add(-5);
+	rb.root->add(-5);
 	print(&rb);
 	cout << "---\n";
 	
@@ -173,10 +173,10 @@ void test_06(){
 	bool OK = true;
 	
 	int out[6] = {};
-	rb.root.inorder_to_buf(out);
+	rb.root->inorder_to_buf(out);
 	
-	int shortest_path_length = get_shortest_path_length<int>(&rb.root);
-	int longest_path_length = get_longest_path_length<int>(&rb.root);
+	int shortest_path_length = get_shortest_path_length<int>(rb.root);
+	int longest_path_length = get_longest_path_length<int>(rb.root);
 	
 	cout << "test: shortest and longest path\n";
 	cout << array_to_string(out,array_count(out)) << "\n";
@@ -189,21 +189,21 @@ void test_06(){
 void test_07(){
 	RBTree<int> rb{0};	
 	
-	rb.root.add(-1);
-	rb.root.add(1);
-	rb.root.add(-2);	
+	rb.root->add(-1);
+	rb.root->add(1);
+	rb.root->add(-2);	
 
-	RBTree<int>::Node *temp = &rb.root;
+	RBTree<int>::Node *temp = rb.root;
 	temp->is_red = false;
-	temp = rb.root.find(-1);
+	temp = rb.root->find(-1);
 	
 	bool OK = true;
 	
 	int out[6] = {};
-	rb.root.inorder_to_buf(out);
+	rb.root->inorder_to_buf(out);
 	
-	int shortest_path_length = get_shortest_path_length<int>(&rb.root);
-	int longest_path_length = get_longest_path_length<int>(&rb.root);
+	int shortest_path_length = get_shortest_path_length<int>(rb.root);
+	int longest_path_length = get_longest_path_length<int>(rb.root);
 	
 	cout << "test: shortest and longest path\n";
 	cout << array_to_string(out,array_count(out)) << "\n";
@@ -218,7 +218,7 @@ void test_09(){
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.root.add(values[i]);
+		rb.root->add(values[i]);
 	}	
 	
 	cout << "test: print(tree)\n";
@@ -232,7 +232,7 @@ void test_08(){
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.root.add(values[i]);
+		rb.root->add(values[i]);
 	}	
 	
 	cout << "test: red node\n";
