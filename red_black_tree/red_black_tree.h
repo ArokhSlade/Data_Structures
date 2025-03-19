@@ -115,6 +115,7 @@ void RedBlackTree<ValType>::attach_child(RedBlackTree *node) {
 		assert(right == nullptr);
 		right = node;
 	}
+	node->parent = this;
 	
 	return; 
 }
