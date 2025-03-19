@@ -50,7 +50,7 @@ void test_01() {
 void test_02() {
 	int test_value = 1;
 	RBTree<int> rb{test_value};	
-	rb.root->add(-1);
+	rb.add(-1);
 		
 	bool OK = true;
 	OK &= rb.root->find(1) != nullptr;	
@@ -67,8 +67,8 @@ void test_02() {
 void test_03() {
 	int test_value = 0;
 	RBTree<int> rb{test_value};
-	rb.root->add(-1);
-	rb.root->add(1);
+	rb.add(-1);
+	rb.add(1);
 		
 	bool OK = true;
 	OK &= rb.root->find(0) != nullptr;	
@@ -97,11 +97,11 @@ void test_03() {
 void test_04(){
 	RBTree<int> rb{0};
 	
-	rb.root->add(0);
-	rb.root->add(1);
-	rb.root->add(1);
-	rb.root->add(-1);
-	rb.root->add(-1);
+	rb.add(0);
+	rb.add(1);
+	rb.add(1);
+	rb.add(-1);
+	rb.add(-1);
 	
 	bool OK = true;
 
@@ -129,11 +129,11 @@ void test_04(){
 void test_05(){
 	RBTree<int> rb{0};
 	
-	rb.root->add(14);
-	rb.root->add(5);
-	rb.root->add(-1);
-	rb.root->add(-3);	
-	rb.root->add(8);	
+	rb.add(14);
+	rb.add(5);
+	rb.add(-1);
+	rb.add(-3);	
+	rb.add(8);	
 	
 	bool OK = true;
 
@@ -153,19 +153,19 @@ void test_06(){
 	RBTree<int> rb{0};	
 	print(&rb);
 	cout << "---\n";
-	rb.root->add(-1);
+	rb.add(-1);
 	print(&rb);
 	cout << "---\n";
-	rb.root->add(-2);
+	rb.add(-2);
 	print(&rb);
 	cout << "---\n";
-	rb.root->add(-3);
+	rb.add(-3);
 	print(&rb);	
 	cout << "---\n";
-	rb.root->add(-4);
+	rb.add(-4);
 	print(&rb);
 	cout << "---\n";
-	rb.root->add(-5);
+	rb.add(-5);
 	print(&rb);
 	cout << "---\n";
 	
@@ -189,9 +189,9 @@ void test_06(){
 void test_07(){
 	RBTree<int> rb{0};	
 	
-	rb.root->add(-1);
-	rb.root->add(1);
-	rb.root->add(-2);	
+	rb.add(-1);
+	rb.add(1);
+	rb.add(-2);	
 
 	RBTree<int>::Node *temp = rb.root;
 	temp->is_red = false;
@@ -218,7 +218,7 @@ void test_09(){
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.root->add(values[i]);
+		rb.add(values[i]);
 	}	
 	
 	cout << "test: print(tree)\n";
@@ -232,7 +232,7 @@ void test_08(){
 	RBTree<int> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.root->add(values[i]);
+		rb.add(values[i]);
 	}	
 	
 	cout << "test: red node\n";
