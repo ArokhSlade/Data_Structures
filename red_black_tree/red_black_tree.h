@@ -148,7 +148,7 @@ void RedBlackTree<ValType>::add(const ValType& new_val) {
 template <typename ValType>
 int get_shortest_path_length(RedBlackTree<ValType> *tree) {
 	if (!tree) return 0;
-	int shortest = 1 + min<ValType>(get_shortest_path_length(tree->left), get_shortest_path_length(tree->right));
+	int shortest = 1 + min<int>(get_shortest_path_length(tree->left), get_shortest_path_length(tree->right));
 	return shortest;
 }
 
@@ -157,7 +157,7 @@ template <typename ValType>
 int get_longest_path_length(RedBlackTree<ValType> *tree) {
 	
 	if (!tree) return 0;
-	int longest = 1 + max<ValType>(get_longest_path_length<ValType>(tree->left), get_longest_path_length<ValType>(tree->right));
+	int longest = 1 + max<int>(get_longest_path_length<ValType>(tree->left), get_longest_path_length<ValType>(tree->right));
 	
 	return longest;	
 }
@@ -167,7 +167,7 @@ int black_height(RedBlackTree<ValType> *tree) {
 	int result = 1; //TODO: what's the black height of an empty tree? 1, if it's an empty leaf; 0, if it's an empty root?
 	if (!tree) return result;
 	result = tree->is_red ? 0 : 1;
-	result += max(black_height(tree->left), black_height(tree->right));
+	result += max<int>(black_height(tree->left), black_height(tree->right));
 		
 	return result;
 }
