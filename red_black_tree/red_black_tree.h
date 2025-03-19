@@ -126,8 +126,8 @@ void RedBlackTree<ValType>::append_leaf(RedBlackTree *node){
 	//percolate down from root and attach to parent
 	
 	if (!node) return;
-	RedBlackTree *parent = get_insertion_parent( node->value );
-	parent->attach_child(node);
+	RedBlackTree *insertion_parent = get_insertion_parent( node->value );
+	insertion_parent->attach_child(node);
 	
 	return;
 }
