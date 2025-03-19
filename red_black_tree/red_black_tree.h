@@ -212,8 +212,7 @@ bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 	
 	//NOTE(Gerald, 2025 03 19): redundant?
 	if (is_black(tree) && count_children(tree) == 1) {
-		result &= is_black(tree->left);
-		result &= is_black(tree->right);
+		result &= is_red(tree->left) || is_red(tree->right);
 	}
 	
 	return result;
