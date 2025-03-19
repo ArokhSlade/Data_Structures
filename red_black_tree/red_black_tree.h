@@ -164,7 +164,10 @@ int get_longest_path_length(RedBlackTree<ValType> *tree) {
 
 template <typename ValType>
 int black_height(RedBlackTree<ValType> *tree) {
-	int result = 1; //TODO: what's the black height of an empty tree? 1, if it's an empty leaf; 0, if it's an empty root?
+	//NOTE(Gerald): empty children of a red node count as black. but an empty tree has height 0.
+	//thus, this will give the wrong result for empty trees.
+	//to fix this we could make this a member function. then we can test for parent != null.
+	int result = 1; 
 	if (!tree) return result;
 	result = tree->is_red ? 0 : 1;
 	result += max<int>(black_height(tree->left), black_height(tree->right));
@@ -174,9 +177,8 @@ int black_height(RedBlackTree<ValType> *tree) {
 
 template <typename ValType>
 bool is_black(RedBlackTree<ValType> *tree) {
-	bool result = true;
-	if (!tree) return result;
-	result = !tree->is_red;
+	if (!tree) return true; //empty children count as black
+	bool result = !tree->is_red;
 	return result;
 }
 	
