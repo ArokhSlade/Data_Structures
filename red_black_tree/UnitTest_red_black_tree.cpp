@@ -242,8 +242,8 @@ void test_09(){
 
 void test_10(){
 	
-	int values[] = {'S','E','A','R','C','H','E','X','A','M','P','L','E'};
-	RBTree<int> rb{values[0]};
+	char values[] = {'S','E','A','R','C','H','E','X','A','M','P','L','E'};
+	RBTree<char> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
 		rb.add(values[i]);
@@ -256,8 +256,8 @@ void test_10(){
 
 void test_11(){
 	
-	int values[] = {'A','C','E','H','L','M','P','R','S','X'};
-	RBTree<int> rb{values[0]};
+	char values[] = {'A','C','E','H','L','M','P','R','S','X'};
+	RBTree<char> rb{values[0]};
 	
 	for (int i = 1 ; i < array_count(values) ; i++) {
 		rb.add(values[i]);
