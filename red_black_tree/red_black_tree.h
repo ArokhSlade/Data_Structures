@@ -45,10 +45,10 @@ struct RedBlackTree {
 		{}
 	};
 	
-	Node root;
+	Node *root;
 	
 	RedBlackTree(Tval value_)
-	:root(value_)
+	:root{new Node{value_}}
 	{}	
 	
 	
@@ -360,7 +360,7 @@ template <> void print(int i) {
 
 template <typename Tval>
 void print(RedBlackTree<Tval> *tree) {
-	print_red_black_tree_node<Tval>(&tree->root);
+	print_red_black_tree_node<Tval>(tree->root);
 }
 
 
