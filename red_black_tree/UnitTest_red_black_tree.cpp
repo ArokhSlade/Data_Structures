@@ -201,6 +201,20 @@ void test_07(){
 	cout << "\n";
 }
 
+void test_09(){
+	
+	int values[] = {0,-10};
+	RBTree<int> rb{values[0]};
+	
+	for (int i = 1 ; i < array_count(values) ; i++) {
+		rb.add(values[i]);
+	}	
+	
+	cout << "test: print(tree)\n";
+	cout << array_to_string(values, array_count(values)) << '\n';
+	print(&rb);
+}
+
 void test_08(){
 	
 	int values[] = {0,-10,5,-6,3,8,-5};
@@ -210,7 +224,7 @@ void test_08(){
 		rb.add(values[i]);
 	}	
 	
-	cout << "test: print(tree)\n";
+	cout << "test: red node\n";
 	cout << array_to_string(values, array_count(values)) << '\n';
 	print(&rb);
 }
@@ -229,6 +243,7 @@ int main() {
 	test_06();
 	test_07();
 	test_08();
+	test_09();
 	
 	
 	return 0;
