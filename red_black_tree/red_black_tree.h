@@ -163,11 +163,13 @@ void RedBlackTree<ValType>::flip_colors_with_children(){
 template<typename ValType>
 void RedBlackTree<ValType>::rotate_right(){
 	RedBlackTree<ValType> *old_parent = parent;
-	
+	assert(left);
 	parent = left;
 	left = parent->right;
-	left->parent = this;
-	left->right = this;
+	if (left){
+		left->parent = this;
+	}
+	parent->right = this;
 	
 	parent->parent = old_parent;
 	if (old_parent) {
@@ -185,9 +187,12 @@ void RedBlackTree<ValType>::rotate_right(){
 template<typename ValType>
 void RedBlackTree<ValType>::rotate_left(){
 	RedBlackTree<ValType> *old_parent = parent;
+	assert(right);
 	parent = right;
 	right = parent->left;
-	right->parent = this;	
+	if (right) {
+		right->parent = this;
+	}
 	parent->left = this;
 	
 	parent->parent = old_parent;
