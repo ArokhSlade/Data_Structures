@@ -35,6 +35,7 @@ struct RedBlackTree {
 	void append_leaf(RedBlackTree *new_node);
 	void add(const ValType&);
 	
+	//store contained values in order
 	ValType * inorder_to_buf(ValType *out);	
 	
 	void fix_upwards_from(RedBlackTree *);
@@ -181,6 +182,7 @@ bool is_black(RedBlackTree<ValType> *tree) {
 	
 template <typename ValType>
 int count_children(RedBlackTree<ValType> *tree) {
+	//counts only non-empty children
 	int result = 0;
 	
 	if (!tree) return result;
@@ -191,10 +193,14 @@ int count_children(RedBlackTree<ValType> *tree) {
 }	
 
 template <typename ValType>
+//the name is misleading. the argument implies as much. the point is to check for validity
+//TODO(Gerald, 2025 03 19): this function has multiple issues. revise.
+
 bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 	
 	bool result = true;
 	
+	//NOTE(Gerald, 2025 03 19): why, when we check black_height? why only in the root?
 	if (tree->is_red) {
 		result &= tree->left  ? !tree->left->is_red  : true;
 		result &= tree->right ? !tree->right->is_red : true;
@@ -202,7 +208,7 @@ bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 
 	result &= black_height(tree->left) == black_height(tree->right);
 	
-	//NOTE: redundant, theoretically
+	//NOTE(Gerald, 2025 03 19): redundant?
 	if (is_black(tree) && count_children(tree) == 1) {
 		result &= is_black(tree->left);
 		result &= is_black(tree->right);
