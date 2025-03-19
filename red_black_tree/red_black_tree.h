@@ -30,13 +30,13 @@ struct RedBlackTree {
 		Node *get_insertion_parent(Tval new_value);
 		void attach_child(Node *Node);
 		void append_leaf(Node *new_node);
-		void add(const Tval&);
+		Node *add(const Tval&);
 		void flip_colors_with_children();
 		void flip_colors_with_parent();
 		void rotate_right();
 		void rotate_left();
 		bool is_root();
-		void fix_up();
+		Node *fix_up();
 		
 		//store contained values in order
 		Tval * inorder_to_buf(Tval *out);	
@@ -47,9 +47,13 @@ struct RedBlackTree {
 	
 	Node *root;
 	
+	void add(const Tval& new_val);
+	
 	RedBlackTree(Tval value_)
 	:root{new Node{value_}}
 	{}	
+	
+	
 	
 	
 };
@@ -215,24 +219,31 @@ void RedBlackTree<Tval>::Node::rotate_left(){
 }
 
 template<typename Tval>
-void RedBlackTree<Tval>::Node::fix_up() {	
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {	
 	assert(is_red);	
+	//NOTE(Gerald): we track the highest node in the tree that is affected
+	//we return it so tree can check if it's the new root and update if needed
+	Node *highest_changed = this; 
+	
 	if (is_root()) {
 		is_red = false;
-		return;
+		return highest_changed;
 	}
+	
 	assert(parent);
+	
 	if (is_black<Tval>(parent)) {
 		if (parent->left == this) {
-			return;
+			//highest_changed = this
 		} else { // this is right child
 			if (!parent->left) {
 				parent->rotate_left();
 				left->flip_colors_with_parent();
+				//highest_changed = this
 			} else {
 				assert(parent->left->is_red);
 				parent->flip_colors_with_children();
-				parent->fix_up();
+				highest_changed = parent->fix_up();
 			}
 		}		
 	} else { //parent is red
@@ -240,27 +251,42 @@ void RedBlackTree<Tval>::Node::fix_up() {
 			assert(parent->parent);
 			parent->parent->rotate_right();
 			is_red = false;
-			parent->fix_up();
+			highest_changed = parent->fix_up();
 		} else { // this is right child
 			parent->rotate_left();
 			parent->rotate_right();
 			left->is_red = false;
-			fix_up();
+			highest_changed = fix_up();
 		}
 	}
-	return;
+	return highest_changed;
 }
 
 
 template<typename Tval>
-void RedBlackTree<Tval>::Node::add(const Tval& new_val) {
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::add(const Tval& new_val) {
+	//NOTE(Gerald): we track the highest node in the tree that is affected
+	//we return it so tree can check if it's the new root and update if needed
+	Node *highest_changed = find(new_val);
+	if (highest_changed) {
+		return highest_changed;
+	}
 	
-	if (find(new_val)) return;
 	RedBlackTree::Node *new_node = new RedBlackTree::Node{new_val};
 	new_node->is_red = true;
 	append_leaf( new_node );
-	new_node->fix_up();
 	
+	highest_changed = new_node->fix_up();
+	
+	return highest_changed;
+}
+
+template<typename Tval>
+void RedBlackTree<Tval>::add(const Tval& new_val) {
+	Node *highest_changed = root->add(new_val);
+	if (highest_changed->is_root()) {
+		root = highest_changed;
+	}
 	return;
 }
 
