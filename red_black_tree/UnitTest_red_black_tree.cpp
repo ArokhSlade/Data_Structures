@@ -151,12 +151,23 @@ void test_05(){
 
 void test_06(){
 	RBTree<int> rb{0};	
-	
+	print(&rb);
+	cout << "---\n";
 	rb.add(-1);
+	print(&rb);
+	cout << "---\n";
 	rb.add(-2);
-	rb.add(-3);	
+	print(&rb);
+	cout << "---\n";
+	rb.add(-3);
+	print(&rb);	
+	cout << "---\n";
 	rb.add(-4);
+	print(&rb);
+	cout << "---\n";
 	rb.add(-5);
+	print(&rb);
+	cout << "---\n";
 	
 	
 	bool OK = true;
