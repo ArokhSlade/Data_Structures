@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdio>
 
 template<typename T>
 T min(const T& a, const T& b) {
@@ -218,3 +219,57 @@ bool is_red_black_tree(RedBlackTree<ValType> *tree) {
 	return result;
 }
 
+
+template <typename ValType>
+void print(ValType value) {	
+	assert(false);
+	return;
+}
+
+
+template <typename ValType> 
+void print(RedBlackTree<ValType> *tree) {
+	print_red_black_tree<ValType>(tree);
+}
+
+template <> void print(char c) {
+	printf("%c",c);
+}
+
+template <> void print(int i) {
+	printf("%d",i);
+}
+
+
+
+/*
+10
+|-10
+ |-11
+ |2
+  |0
+  |5
+|-5
+*/
+template <typename ValType>
+void print_red_black_tree(RedBlackTree<ValType> *tree, int indent = 0) {
+	if (!tree) {
+		return;
+	}
+	
+	for (int i = 0 ; i < indent-1 ; ++i) {
+		print(' ');
+	}
+	
+	if (indent != 0) {
+		print('|');
+	}
+	
+	print(tree->value);
+	print('\n');
+	
+	print_red_black_tree(tree->left, indent+1);
+	print_red_black_tree(tree->right, indent+1);
+	
+	return;
+}
