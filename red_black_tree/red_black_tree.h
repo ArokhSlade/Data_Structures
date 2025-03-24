@@ -39,10 +39,12 @@ struct RedBlackTree {
 		bool is_root();
 		bool is_leaf();
 		bool is_3_node();
+		bool is_2_node();
 		Node *fix_up();
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
 		Node *scooch_to_right();
+		Node *scooch_to_left();
 		Node *walk_down(Tval target);
 		
 		//store contained values in order
@@ -162,8 +164,20 @@ bool RedBlackTree<Tval>::Node::is_leaf(){
 	return result;
 }
 
+template<class T>
+bool RedBlackTree<T>::Node::is_2_node() {
+	//in this implementation red nodes always lean left unless during transformations	
+	assert(!right || !right->is_red); //don't call this function during transformations.
+	assert(!is_red); //ensure this function is only called on black nodes.
+	bool result = !left || !left->is_red; 
+	return result;
+}
+
 template<typename Tval>
 bool RedBlackTree<Tval>::Node::is_3_node(){
+	//in this implementation red nodes always lean left unless during transformations	
+	assert(!right || !right->is_red); //don't call this function during transformations.
+	assert(!is_red); //only called on black nodes
 	bool result = left && left->is_red;
 	return result;
 }
@@ -509,6 +523,31 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
 	return new_root;
 }
 
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
+	using RBNode = RedBlackTree<T>::Node;
+	RBNode *new_root = nullptr;
+	
+	if (is_3_node()) {
+		// TODO
+	} else {		
+		assert(is_root()); //should only happen during walk_down inside root case
+		// assert(left && left->is_3_node() && right);
+		
+		// new_root = left;
+		// new_root->left->is_red = false;
+		// RBNode *new_left = new_root->replace_right(right);		
+		
+		// RBNode *new_right = right->replace_left(this);
+		
+		// left = new_left;
+		// right = new_right;
+		// is_red = true;
+		
+	}
+	
+	return new_root;
+}
 
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
@@ -516,23 +555,34 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 	// return value, used by RedBlackTree::delete()
 	RedBlackTree<T>::Node *new_root = nullptr;
 	
+	//this function only called when target hasn't been found yet.
+	assert(target != value); 
+	
 	if (is_leaf()) {
 		// TODO
 	} else if (is_root()) {
+		
 		if (is_3_node()) {
 			// nothing to be done
-		} else if (left->is_3_node()) {
-			if (target > value) {
+			
+		} else if (left && right && left->is_2_node() && right->is_2_node()){
+			// merge 3 2-nodes into 1 4-node			
+			left->is_red = right->is_red = true;
+			
+		} else if (target > value) {
+			
+			if (right->is_2_node()) {
 				new_root = scooch_to_right();
 			} else {
 				// nothing to be done
 			}
-		} else if (right->is_3_node()) {
-			// TODO			
-		} else {
-			// merge 3 2-nodes into 1 4-node
-			assert(left && right && left->is_black() && right->is_black());
-			left->is_red = right->is_red = true;			
+		} else { // target < value
+		
+			if (left->is_2_node()) {
+				new_root = scooch_to_left();
+			} else {
+				//nothing to be done
+			}
 		}
 	} else {
 		//TODO
