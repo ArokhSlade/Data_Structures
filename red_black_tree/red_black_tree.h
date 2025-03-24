@@ -533,8 +533,24 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
 			assert(old_parent->right == this);
 			old_parent->replace_right(replacement);
 		}
-	} else if (is_red) {
-		//TODO
+	} else if (is_red) { //identical transformations to root case
+		Node *old_parent = parent;
+		
+		assert(left && left->is_3_node() && right);
+		
+		Node *replacement = left;
+		replacement->left->is_red = false;
+		Node *new_left = replacement->replace_right(right);
+		
+		Node *new_right = right->replace_left(this);
+		
+		replace_left(new_left);
+		assert(!left || left->parent == this);
+		
+		replace_right(new_right);
+		assert(!right || right->parent == this);
+		
+		assert(is_red);
 	} else {		
 		assert(is_root()); //should only happen during walk_down inside root case
 		assert(left && left->is_3_node() && right);
@@ -729,7 +745,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 				if (sibling->is_2_node()) {
 					parent->squash_middle_parent();
 				} else { //sibling->is_3_node()
-					//TODO
+					parent->scooch_to_right();
 				}
 			}
 			
