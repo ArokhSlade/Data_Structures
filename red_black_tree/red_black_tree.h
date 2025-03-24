@@ -45,6 +45,8 @@ struct RedBlackTree {
 		Node *replace_left(Node *);
 		Node *scooch_to_right();
 		Node *scooch_to_left();
+		void squash_right();
+		void squash_left();		
 		Node *walk_down(Tval target);
 		
 		//store contained values in order
@@ -564,6 +566,16 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
 }
 
 template<class T>
+//merge parent and right 2-node sibling into one 4-node
+void RedBlackTree<T>::Node::squash_right() {
+	is_red = true;
+	assert(parent->right->is_black());
+	parent->right->is_red = true;
+	parent->is_red = false;
+	return;
+}
+
+template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 	
 	// return value, used by RedBlackTree::delete()
@@ -598,7 +610,15 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 				//nothing to be done
 			}
 		}
-	} else {
+	} else { //in-between root and leaf
+		if (is_3_node()) {
+			//nothing to be done
+		} else if (parent->left == this) {
+			assert(parent->is_red);
+			if (parent->right->is_2_node()) {
+				squash_right();
+			}
+		}
 		
 	}
 	
