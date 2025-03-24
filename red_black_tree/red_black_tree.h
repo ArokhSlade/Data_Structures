@@ -473,12 +473,10 @@ RedBlackTree<T> rb_from_values(T *values, int count) {
 
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_right(RedBlackTree<T>::Node *new_right) {
-	RedBlackTree<T>::Node *old_right = right;
-	assert(new_right);
+	RedBlackTree<T>::Node *old_right = right;	
 	right = new_right;
-	right->parent = this;
-	if (old_right) {
-		old_right->parent = nullptr;
+	if (right) {
+		right->parent = this;
 	}
 	return old_right;
 }
@@ -487,12 +485,12 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_right(RedBlackTree<T>::Nod
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_left(RedBlackTree<T>::Node *new_left) {
 	RedBlackTree<T>::Node *old_left = left;
-	assert(new_left);
+	
 	left = new_left;
-	left->parent = this;
-	if (old_left) {
-		old_left->parent = nullptr;
+	if (left) {
+		left->parent = this;
 	}
+	
 	return old_left;
 }
 
@@ -514,10 +512,14 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
 		
 		RBNode *new_right = right->replace_left(this);
 		
-		left = new_left;
-		right = new_right;
-		is_red = true;
 		
+		replace_left(new_left);
+		assert(!left || left->parent == this);
+		
+		replace_right(new_right);
+		assert(!right || right->parent == this);
+		
+		is_red = true;		
 	}
 	
 	return new_root;
@@ -532,18 +534,26 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
 		// TODO
 	} else {		
 		assert(is_root()); //should only happen during walk_down inside root case
-		// assert(left && left->is_3_node() && right);
+		assert(right && right->is_3_node() && left);
 		
-		// new_root = left;
-		// new_root->left->is_red = false;
-		// RBNode *new_left = new_root->replace_right(right);		
+		left->is_red = true;
 		
-		// RBNode *new_right = right->replace_left(this);
+		new_root = right->left;
+		new_root->is_red = false;
 		
-		// left = new_left;
-		// right = new_right;
-		// is_red = true;
+		RBNode *new_right = new_root->replace_left(this);
+		RBNode *lost_child = new_root->replace_right(new_root->parent);
+		new_root->right->replace_left(lost_child);
 		
+		replace_right(new_right);
+		
+		assert(left->is_red);
+		assert(parent == new_root && new_root->left == this);
+		assert(!new_root->right || new_root->right->parent == new_root);
+		assert(!lost_child || lost_child->parent->parent == new_root);
+		assert(!new_root->right || new_root->right->left == lost_child);
+		assert(right == new_right);
+		assert(!right || right->parent == this);
 	}
 	
 	return new_root;
