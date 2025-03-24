@@ -549,7 +549,43 @@ void test_23() {
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
-	cout << "current node: 1\n";
+	cout << "current node: 5\n";
+	rb.root->right->right->walk_down(999); //target doesn't matter for in-between case
+	
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
+
+void test_24() {
+	/*
+	walk_down case in-between #4:
+	p		-> p
+	|5      -> |4
+	 |*2    ->  |*2
+	  |1    ->   |1
+	  |4    ->   |3
+	   |*3	->	|6
+	 |6     ->   |*5
+	*/
+	char name[] = "walk_down between root and leaf: node (6) is 2-node (right child) with 3-node sibling -> scooch right";
+	
+	RBTree<int> rb{-10};
+	
+	rb.root->debug_add_right(5, false);
+	rb.root->right->debug_add_left(2, true);
+	rb.root->right->left->debug_add_left(1, false);
+	rb.root->right->left->debug_add_right(4, false);
+	rb.root->right->left->right->debug_add_left(3, true);
+	rb.root->right->debug_add_right(6, false);
+	
+	rb.root->right->right->debug_add_right(10, false); //leaf below
+	
+	cout << "test: " << name << '\n';
+	print(&rb);
+	cout << "current node: 6\n";
 	rb.root->right->right->walk_down(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
@@ -589,6 +625,7 @@ int main() {
 	test_21();
 	test_22();
 	test_23();
+	test_24();
 	
 	return 0;
 }
