@@ -40,7 +40,10 @@ struct RedBlackTree {
 		bool is_leaf();
 		bool is_3_node();
 		Node *fix_up();
-		void walk_down();
+		Node *replace_right(Node *);
+		Node *replace_left(Node *);
+		Node *scooch_to_right();
+		Node *walk_down(Tval target);
 		
 		//store contained values in order
 		Tval * inorder_to_buf(Tval *out);	
@@ -378,6 +381,9 @@ bool is_red_black_tree(typename RedBlackTree<Tval>::Node *tree) {
 }
 
 
+
+
+
 template <typename Tval>
 void print(Tval value) {	
 	assert(false);
@@ -450,8 +456,65 @@ RedBlackTree<T> rb_from_values(T *values, int count) {
 	return rb;
 }
 
+
 template<class T>
-void RedBlackTree<T>::Node::walk_down() {
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_right(RedBlackTree<T>::Node *new_right) {
+	RedBlackTree<T>::Node *old_right = right;
+	assert(new_right);
+	right = new_right;
+	right->parent = this;
+	if (old_right) {
+		old_right->parent = nullptr;
+	}
+	return old_right;
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_left(RedBlackTree<T>::Node *new_left) {
+	RedBlackTree<T>::Node *old_left = left;
+	assert(new_left);
+	left = new_left;
+	left->parent = this;
+	if (old_left) {
+		old_left->parent = nullptr;
+	}
+	return old_left;
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
+	using RBNode = RedBlackTree<T>::Node;
+	RBNode *new_root = nullptr;
+	
+	if (is_3_node()) {
+		// TODO
+	} else {		
+		assert(is_root()); //should only happen during walk_down inside root case
+		assert(left && left->is_3_node() && right);
+		
+		new_root = left;
+		new_root->left->is_red = false;
+		RBNode *new_left = new_root->replace_right(right);		
+		
+		RBNode *new_right = right->replace_left(this);
+		
+		left = new_left;
+		right = new_right;
+		is_red = true;
+		
+	}
+	
+	return new_root;
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
+	
+	// return value, used by RedBlackTree::delete()
+	RedBlackTree<T>::Node *new_root = nullptr;
 	
 	if (is_leaf()) {
 		// TODO
@@ -459,7 +522,11 @@ void RedBlackTree<T>::Node::walk_down() {
 		if (is_3_node()) {
 			// nothing to be done
 		} else if (left->is_3_node()) {
-			
+			if (target > value) {
+				new_root = scooch_to_right();
+			} else {
+				// nothing to be done
+			}
 		} else if (right->is_3_node()) {
 			// TODO			
 		} else {
@@ -471,5 +538,5 @@ void RedBlackTree<T>::Node::walk_down() {
 		//TODO
 	}
 	
-	return;
+	return new_root;
 }
