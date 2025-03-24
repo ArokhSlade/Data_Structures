@@ -508,7 +508,32 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
 	RBNode *new_root = nullptr;
 	
 	if (is_3_node()) {
-		// TODO
+		Node *old_parent = parent;
+			
+		assert(left->is_red);
+		assert(left && left->right->is_3_node() && right);
+		Node *replacement = left->right;		
+		
+		right->is_red = false;
+		Node *new_right = right->replace_left(this);
+		Node *new_left = replacement->replace_right(right);
+		Node *lost_child = replacement->replace_left(left);
+		lost_child->is_red = false;
+		left->replace_right(lost_child);
+		
+		replace_left(new_left);
+		replace_right(new_right);
+		is_red = true;
+		
+		assert(old_parent);
+		if (old_parent->left == this) {
+			old_parent->replace_left(replacement);
+		} else { //old_parent->right == this
+			assert(old_parent->right == this);
+			old_parent->replace_right(replacement);
+		}
+	} else if (is_red) {
+		//TODO
 	} else {		
 		assert(is_root()); //should only happen during walk_down inside root case
 		assert(left && left->is_3_node() && right);
@@ -683,8 +708,8 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 				assert(middle);
 				if (middle->is_2_node()) {
 					parent->squash_right_parent();
-				} else {
-					//TODO
+				} else { //middle->is_3_node()
+					parent->scooch_to_right();
 				}
 			} else { // this is the middle child of a 3-node
 				//TODO
