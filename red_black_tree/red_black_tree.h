@@ -35,6 +35,7 @@ struct RedBlackTree {
 		void flip_colors_with_parent();
 		void rotate_right();
 		void rotate_left();
+		bool is_black();
 		bool is_root();
 		Node *fix_up();
 		
@@ -52,7 +53,6 @@ struct RedBlackTree {
 	RedBlackTree(Tval value_)
 	:root{new Node{value_}}
 	{}	
-	
 	
 	
 	
@@ -232,11 +232,11 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 	
 	assert(parent);
 	
-	if (is_black<Tval>(parent)) {
+	if (parent->is_black()) {
 		if (parent->left == this) {
 			//highest_changed = this
 		} else { // this is right child
-			if (!parent->left || is_black<Tval>(parent->left)) {
+			if (!parent->left || parent->left->is_black()) {
 				parent->rotate_left();
 				left->flip_colors_with_parent();
 				//highest_changed = this
@@ -321,9 +321,8 @@ int black_height(typename RedBlackTree<Tval>::Node *tree) {
 }
 
 template <typename Tval>
-bool is_black(typename RedBlackTree<Tval>::Node *tree) {
-	if (!tree) return true; //empty children count as black
-	bool result = !tree->is_red;
+bool RedBlackTree<Tval>::Node::is_black() {	
+	bool result = !is_red;
 	return result;
 }
 	
