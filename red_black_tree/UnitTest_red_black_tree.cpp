@@ -442,9 +442,10 @@ void test_20() {
 	RBTree<int> rb{0};
 	
 	rb.root->debug_add_left(-1, false);
-	rb.root->left->debug_add_left(-2, true);
-	
 	rb.root->debug_add_right(1, false);
+	
+	rb.root->left->debug_add_left(-2, true); //leaf
+	
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
@@ -665,6 +666,46 @@ void test_26() {
 	return;
 }
 
+void test_27() {
+	/*
+	walk_down case leaf #0:
+	0		-> 0
+	|-5     -> |-5 
+	 |-10   ->  |-10      <-------leaf = right key in 3-node
+	  |*-11 ->   |*-11    
+	 |-3    ->  |-3
+	|5      -> |5
+	 |*2    ->  |*2
+	  |1    ->   |1
+	  |4    ->   |4
+	 |9     ->  |9
+	 
+	*/
+	char name[] = "walk_down at leaf: node (-10) is right key in 3-node";
+	
+	RBTree<int> rb{0};
+	
+	rb.root->debug_add_left(-5, false);
+	rb.root->left->debug_add_left(-10, false);
+	rb.root->left->debug_add_right(-3, false);
+	rb.root->left->left->debug_add_left(-11, true);
+	rb.root->debug_add_right(5, false);
+	rb.root->right->debug_add_left(2, true);
+	rb.root->right->left->debug_add_left(1, true);
+	rb.root->right->left->debug_add_right(4, true);
+	rb.root->right->debug_add_right(9, false);
+	
+	cout << "test: " << name << '\n';
+	print(&rb);
+	cout << "current node: -10\n";
+	rb.root->left->left->walk_down(10); //target doesn't matter for in-between case
+	
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
 int main() {
 	
 	test_01();
@@ -700,6 +741,8 @@ int main() {
 	
 	test_25();
 	test_26();
+	
+	test_27();
 	
 	return 0;
 }
