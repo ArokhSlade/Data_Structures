@@ -367,7 +367,7 @@ void test_16() {
 
 void test_17() {
 	/*
-	walk_down case root #2: left child is 3_node, target = 1
+	walk_down case root #3: left child is 3_node, target = 1
 	0       -> -1
 	|-1     -> |-2
 	 |*-2   -> |1
@@ -388,10 +388,28 @@ void test_17() {
 }
 
 
+void test_18() {
+	/*
+	walk_down case root #4: right child is 3_node, target on right side -> do nothing
+	0    
+	|-1  
+	|2   
+	 |1
+	*/
+	char name[] = "walk_down at root, left child is 3-node, target is greater (2) -> do nothing";
+	int values[] = {0,-1,2,1};
+	RBTree<int> rb = rb_from_values<int>(values, 4);
+	print_test(name, values, 4, &rb);
+	rb.root->walk_down(22);
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
 
 
 int main() {
-	/*
+	
 	test_01();
 	test_02();
 	test_03();
@@ -410,8 +428,9 @@ int main() {
 	test_14();
 	test_15();
 	test_16();
-	*/
 	test_17();
+	
+	test_18();
 	
 	
 	return 0;
