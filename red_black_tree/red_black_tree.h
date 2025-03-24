@@ -536,8 +536,35 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
 	using RBNode = RedBlackTree<T>::Node;
 	RBNode *new_root = nullptr;
 	
-	if (is_3_node()) {
-		// TODO
+	if (is_red) {
+		assert(!left->is_red);		
+		assert(right && right->is_3_node() && left);		
+		
+		left->is_red = true;
+		is_red = false;
+		
+		RBNode *old_parent = parent;
+		
+		RBNode *new_parent = right->left;
+		assert(new_parent->is_red);		
+		
+		RBNode *new_right = new_parent->replace_left(this);
+		RBNode *lost_child = new_parent->replace_right(new_parent->parent);
+		new_parent->right->replace_left(lost_child);
+		
+		replace_right(new_right);
+		
+		assert(old_parent->left == this);
+		old_parent->replace_left(new_parent);
+		
+		
+		assert(left->is_red);
+		assert(parent == new_parent && new_parent ->left == this);
+		assert(!new_parent->right || new_parent->right->parent == new_parent);
+		assert(!lost_child || lost_child->parent->parent == new_parent);
+		assert(!new_parent->right || new_parent->right->left == lost_child);		
+		assert(!right || right->parent == this);
+		
 	} else {		
 		assert(is_root()); //should only happen during walk_down inside root case
 		assert(right && right->is_3_node() && left);
@@ -558,7 +585,6 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
 		assert(!new_root->right || new_root->right->parent == new_root);
 		assert(!lost_child || lost_child->parent->parent == new_root);
 		assert(!new_root->right || new_root->right->left == lost_child);
-		assert(right == new_right);
 		assert(!right || right->parent == this);
 	}
 	
@@ -617,6 +643,8 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 			assert(parent->is_red);
 			if (parent->right->is_2_node()) {
 				squash_right();
+			} else {
+				parent->scooch_to_left();
 			}
 		}
 		
