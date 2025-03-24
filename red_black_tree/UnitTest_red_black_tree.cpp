@@ -611,16 +611,16 @@ void test_25() {
 	RBTree<int> rb{-10};
 	
 	rb.root->debug_add_right(4, false);
-	rb.root->right->debug_add_left(2, true);
+	rb.root->right->debug_add_left(1, true);
 	rb.root->right->debug_add_right(5, false);
-	rb.root->right->left->debug_add_left(1, false);
+	rb.root->right->left->debug_add_left(0, false);
 	rb.root->right->left->debug_add_right(3, false);
 	
 	rb.root->right->left->right->debug_add_left(2, false); //leaf
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
-	cout << "current node: 5\n";
+	cout << "current node: 3\n";
 	rb.root->right->left->right->walk_down(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
