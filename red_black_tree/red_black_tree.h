@@ -47,6 +47,7 @@ struct RedBlackTree {
 		Node *scooch_to_left();
 		void squash_right();
 		void squash_right_parent(); //TODO fix this mess
+		void squash_middle_parent(); 
 		void squash_left();		
 		Node *walk_down(Tval target);
 		
@@ -630,7 +631,6 @@ void RedBlackTree<T>::Node::squash_right() {
 }
 
 template<class T>
-//merge parent and right 2-node cousin into one 4-node
 void RedBlackTree<T>::Node::squash_right_parent() {	
 	Node *old_parent = parent;
 	
@@ -651,6 +651,19 @@ void RedBlackTree<T>::Node::squash_right_parent() {
 		assert(old_parent->right == this);
 		old_parent->replace_right(parent);
 	}
+	
+	
+	return;
+}
+
+template<class T>
+void RedBlackTree<T>::Node::squash_middle_parent() {	
+	assert(is_red);
+	assert(left && left->is_black());
+	assert(right && right->is_black());
+	
+	is_red = false;
+	left->is_red = right->is_red = true;
 	
 	
 	return;
@@ -712,7 +725,12 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 					parent->scooch_to_right();
 				}
 			} else { // this is the middle child of a 3-node
-				//TODO
+				Node *sibling = parent->left;
+				if (sibling->is_2_node()) {
+					parent->squash_middle_parent();
+				} else { //sibling->is_3_node()
+					//TODO
+				}
 			}
 			
 		}
