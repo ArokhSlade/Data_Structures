@@ -388,23 +388,73 @@ void test_17() {
 
 void test_18() {
 	/*
-	walk_down case root #4: right child is 3_node, target on right side -> do nothing
+	walk_down case root #4: left child is 3_node, target on left side -> do nothing
 	0    
 	|-1  
-	|2   
-	 |1
+	 |*-2
+	|1 
 	*/
-	char name[] = "walk_down at root, left child is 3-node, target is greater (2) -> do nothing";
-	int values[] = {0,-1,2,1};
+	char name[] = "walk_down at root, left child is 3-node, target is less (-2) -> do nothing";
+	int values[] = {0,-1,1,-2};
 	RBTree<int> rb = rb_from_values<int>(values, 4);
 	print_test(name, values, 4, &rb);
-	rb.root->walk_down(22);
+	rb.root->walk_down(-2);
 	cout << "result: \n";
 	print(&rb);
 	
 	return;
 }
 
+
+void test_19() {
+	/*
+	walk_down case root #5: left child is 2_node, target on left side -> scooch left
+	0		-> 1
+	|-1  	-> |0
+	|2      ->  |*-1
+	 |*1   ->  |2
+	*/
+	char name[] = "walk_down at root, left child is 2-node, target is less (-1) -> scooch left";
+	int values[] = {0,-1,2,1};
+	RBTree<int> rb = rb_from_values<int>(values, 4);
+	print_test(name, values, 4, &rb);
+	Node<int> *new_root = rb.root->walk_down(-1);
+	if (new_root) {
+		rb.root = new_root;
+	}
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
+
+void test_20() {
+	/*
+	walk_down case in-between #0:
+	p
+	|-2
+	 |*-1
+	|1
+	
+	*/
+	char name[] = "walk_down between root and leaf, node is 3-node (-1) -> do nothing";
+	RBTree<int> rb{0};
+	
+	rb.root->debug_add_left(-1, false);
+	rb.root->left->debug_add_left(-2, true);
+	
+	rb.root->debug_add_right(1, false);
+	
+	cout << "test: " << name << '\n';
+	print(&rb);
+	rb.root->left->walk_down(-2);
+	
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
 
 int main() {
 	
@@ -429,7 +479,10 @@ int main() {
 	test_17();
 	
 	test_18();
-	
+	test_19();
+
+
+	test_20();
 	
 	return 0;
 }
