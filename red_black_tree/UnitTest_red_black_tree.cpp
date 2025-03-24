@@ -30,6 +30,14 @@ using Node = RBTree<T>::Node;
 
 using std::cout;
 
+template<class T>
+void print_test(char *name, T *values, int count, RBTree<T> *rb) {
+	cout << "test : " << name << '\n';
+	cout << array_to_string(values, count) << '\n';
+	print(rb);
+	return;
+}
+
 void test_01() {
 	int test_value = 1;
 	RBTree<int> rb{test_value};
@@ -268,11 +276,122 @@ void test_11(){
 	print(&rb);
 }
 
+void test_12() {
+	/*
+	walk_down case root #0: root is 3-node -> nothing to be done
+	0       -> 0
+	> *-1   -> > *-1	
+	*/
+	char name[] = "walk_down at root, root is 3-node (has red child)";
+	int values[] = {0,-1};
+	RBTree<int> rb = rb_from_values<int>(values, 2);
+	print_test(name, values, 2, &rb);
+	rb.root->walk_down(-1);
+	print(&rb);
+	
+	return;
+}
+
+void test_13() {
+	/*
+	walk_down case root #1: both children are 2-nodes (no red children)
+	0       -> 0
+	> -1    -> > *-1
+	>  1    -> > * 1
+	*/
+	char name[] = "walk_down at root, both children 2-nodes";
+	int values[] = {0,-1,1};
+	RBTree<int> rb = rb_from_values<int>(values, 3);	
+	print_test(name, values, 3, &rb);
+	rb.root->walk_down(1);
+	print(&rb);
+	
+	return;
+}
+
+
+void test_14() {
+	/*
+	walk_down case root #2: left child is 3_node, target = -2
+	0    
+	|-1  
+	 |*-2
+	|1   
+	*/
+	char name[] = "walk_down at root, left child is 3-node, target is lesser (-2) -> do nothing";
+	int values[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_values<int>(values, 4);
+	print_test(name, values, 4, &rb);
+	rb.root->walk_down(-2);
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
+
+
+void test_15() {	
+	char name[] = "replace_right(-2)";
+	int values[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_values<int>(values, 4);
+	print_test(name, values, 4, &rb);
+	Node<int> *new_right = rb.root->left->left;
+	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
+	cout << "result: \n";
+	print(&rb);	
+	cout << "old right: \n";
+	//print<RedBlackTree<int>::Node *>(old_right); //template specialization not called
+	print_red_black_tree_node<int>(old_right);
+	
+	
+	return;
+}
+
+void test_16() {	
+	char name[] = "replace_right (-1) with nullptr";
+	int values[] = {0,-1};
+	RBTree<int> rb = rb_from_values<int>(values, 2);
+	print_test(name, values, 2, &rb);
+	Node<int> *new_right = rb.root->left;
+	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
+	cout << "result: \n";
+	print(&rb);	
+	cout << "old right: \n";
+	//print<RedBlackTree<int>::Node *>(old_right); //template specialization not called
+	print_red_black_tree_node<int>(old_right);
+	
+	
+	return;
+}
+
+void test_17() {
+	/*
+	walk_down case root #2: left child is 3_node, target = 1
+	0       -> -1
+	|-1     -> |-2
+	 |*-2   -> |1
+	|1      ->  |*0
+	*/
+	char name[] = "walk_down at root, left child is 3-node, target is greater (1) -> scooch";
+	int values[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_values<int>(values, 4);
+	print_test(name, values, 4, &rb);
+	Node<int> *new_root = rb.root->walk_down(1);
+	if (new_root) {
+		rb.root = new_root;
+	}
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
 
 
 
 int main() {
-	
+	/*
 	test_01();
 	test_02();
 	test_03();
@@ -286,6 +405,15 @@ int main() {
 	test_10();
 	test_11();
 	
+	test_12();
+	test_13();
+	test_14();
+	test_15();
+	test_16();
+	*/
+	test_17();
+	
 	
 	return 0;
 }
+
