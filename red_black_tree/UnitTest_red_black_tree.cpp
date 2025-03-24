@@ -634,12 +634,12 @@ void test_26() {
 	/*
 	walk_down case in-between #6:
 	p		-> p
-	|5      -> |4
-	 |*1    ->  |*2
-	  |0    ->   |1
+	|5      -> |5
+	 |*1    ->  |*1
+	  |0    ->   |0
 	  |3    ->   |3
-	   |*2	->	|6
-	 |6     ->   |*5
+	   |*2	->	  |*2
+	 |6     ->  |6 
 	*/
 	char name[] = "walk_down between root and leaf: node (3) is 2-node (middle child) with 3-node (left) sibling -> scooch right";
 	
