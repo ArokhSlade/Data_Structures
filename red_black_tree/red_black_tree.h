@@ -52,6 +52,10 @@ struct RedBlackTree {
 		
 		Node(Tval value_) :value{value_}
 		{}
+		
+		void debug_add_left(Tval new_val, bool set_red);
+		void debug_add_right(Tval new_val, bool set_red);
+		
 	};
 	
 	Node *root;
@@ -595,8 +599,24 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 			}
 		}
 	} else {
-		//TODO
+		
 	}
 	
 	return new_root;
+}
+
+template<class T>
+void RedBlackTree<T>::Node::debug_add_left(T new_val, bool set_red) {
+	left = new Node{new_val};
+	left->parent = this;
+	left->is_red = set_red;
+	return;
+}
+
+template<class T>
+void RedBlackTree<T>::Node::debug_add_right(T new_val, bool set_red) {
+	right = new Node{new_val};
+	right->parent = this;
+	right->is_red = set_red;
+	return;
 }
