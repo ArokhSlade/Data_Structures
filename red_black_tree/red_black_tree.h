@@ -166,9 +166,8 @@ bool RedBlackTree<Tval>::Node::is_root(){
 }
 
 template<typename Tval>
-bool RedBlackTree<Tval>::Node::is_leaf(){
-	bool result = left == nullptr;
-		 result = result && right == nullptr;
+bool RedBlackTree<Tval>::Node::is_leaf(){	
+	bool result = right == nullptr;
 	return result;
 }
 
@@ -185,7 +184,7 @@ template<typename Tval>
 bool RedBlackTree<Tval>::Node::is_3_node(){
 	//in this implementation red nodes always lean left unless during transformations	
 	assert(!right || !right->is_red); //don't call this function during transformations.
-	assert(!is_red); //only called on black nodes
+	
 	bool result = left && left->is_red;
 	return result;
 }
@@ -692,12 +691,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 	// return value, used by RedBlackTree::delete()
 	Node *new_root = nullptr;
 	
-	//this function only called when target hasn't been found yet.
-	assert(target != value); 
-	
-	if (is_leaf()) {
-		// TODO
-	} else if (is_root()) {
+	if (is_root()) {
 		
 		if (is_3_node()) {
 			// nothing to be done
@@ -722,7 +716,10 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 			}
 		}
 	} else { //in-between root and leaf
-		if (is_3_node()) {
+		if (is_leaf()) {
+			printf("is_leaf...\n");
+		}
+		if (is_3_node() || is_red) {
 			//nothing to be done
 		} else if (parent->left == this) {
 			assert(parent->is_red);
