@@ -46,6 +46,7 @@ struct RedBlackTree {
 		Node *scooch_to_right();
 		Node *scooch_to_left();
 		void squash_right();
+		void squash_right_parent(); //TODO fix this mess
 		void squash_left();		
 		Node *walk_down(Tval target);
 		
@@ -593,6 +594,8 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
 
 template<class T>
 //merge parent and right 2-node sibling into one 4-node
+//TODO: this should operate relative to parent, not relative to child
+//TODO: this should be called squash_left, because it's a red parent
 void RedBlackTree<T>::Node::squash_right() {
 	is_red = true;
 	assert(parent->right->is_black());
@@ -602,10 +605,38 @@ void RedBlackTree<T>::Node::squash_right() {
 }
 
 template<class T>
+//merge parent and right 2-node cousin into one 4-node
+void RedBlackTree<T>::Node::squash_right_parent() {	
+	Node *old_parent = parent;
+	
+	right->is_red = true;
+	
+	assert(left->is_red);
+	left->is_red = false;
+	
+	Node *new_left = left->replace_right(this);
+	replace_left(new_left);
+	left->is_red = true;
+	assert(!is_red);
+	
+	assert(old_parent);
+	if (old_parent->left == this) {
+		old_parent->replace_left(parent);
+	} else {
+		assert(old_parent->right == this);
+		old_parent->replace_right(parent);
+	}
+	
+	
+	return;
+}
+
+
+template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 	
 	// return value, used by RedBlackTree::delete()
-	RedBlackTree<T>::Node *new_root = nullptr;
+	Node *new_root = nullptr;
 	
 	//this function only called when target hasn't been found yet.
 	assert(target != value); 
@@ -646,6 +677,19 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 			} else {
 				parent->scooch_to_left();
 			}
+		} else { // parent->right == this
+			if (parent->is_black()) {
+				Node *middle = parent->left->right;
+				assert(middle);
+				if (middle->is_2_node()) {
+					parent->squash_right_parent();
+				} else {
+					//TODO
+				}
+			} else { // this is the middle child of a 3-node
+				//TODO
+			}
+			
 		}
 		
 	}
