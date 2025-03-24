@@ -466,7 +466,7 @@ void test_21() {
 	  |3    ->   |*3
 	 |5     -> |5
 	*/
-	char name[] = "walk_down between root and leaf: node (1) is 2-node (left child) with 2-node sibling -> squash right";
+	char name[] = "walk_down between root and leaf: node (1) is 2-node (left child) with 2-node sibling -> squash";
 	
 	RBTree<int> rb{-10};
 	
@@ -529,13 +529,13 @@ void test_23() {
 	/*
 	walk_down case in-between #3:
 	p		-> p
-	|4      -> |4
-	 |*2     ->  |2
-	  |1    ->   |*1
+	|4      -> |2
+	 |*2    ->  |1
+	  |1    ->  |4
 	  |3    ->   |*3
-	 |5     -> |5
+	 |5     ->   |*5
 	*/
-	char name[] = "walk_down between root and leaf: node (5) is 2-node (right child) with 2-node sibling -> squash left";
+	char name[] = "walk_down between root and leaf: node (5) is 2-node (right child) with 2-node sibling -> squash";
 	
 	RBTree<int> rb{-10};
 	
@@ -550,7 +550,7 @@ void test_23() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->right->walk_down(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
