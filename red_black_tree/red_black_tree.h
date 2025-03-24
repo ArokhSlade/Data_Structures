@@ -40,6 +40,7 @@ struct RedBlackTree {
 		bool is_leaf();
 		bool is_3_node();
 		Node *fix_up();
+		void walk_down();
 		
 		//store contained values in order
 		Tval * inorder_to_buf(Tval *out);	
@@ -435,6 +436,40 @@ void print_red_black_tree_node(typename RedBlackTree<Tval>::Node *tree, int inde
 	
 	print_red_black_tree_node<Tval>(tree->left, indent+1);
 	print_red_black_tree_node<Tval>(tree->right, indent+1);
+	
+	return;
+}
+
+template <class T>
+RedBlackTree<T> rb_from_values(T *values, int count) {
+	RedBlackTree<T> rb{values[0]};
+	for (int i = 1 ; i < count ; ++i) {
+		rb.add(values[i]);
+	}
+	
+	return rb;
+}
+
+template<class T>
+void RedBlackTree<T>::Node::walk_down() {
+	
+	if (is_leaf()) {
+		// TODO
+	} else if (is_root()) {
+		if (is_3_node()) {
+			// nothing to be done
+		} else if (left->is_3_node()) {
+			
+		} else if (right->is_3_node()) {
+			// TODO			
+		} else {
+			// merge 3 2-nodes into 1 4-node
+			assert(left && right && left->is_black() && right->is_black());
+			left->is_red = right->is_red = true;			
+		}
+	} else {
+		//TODO
+	}
 	
 	return;
 }
