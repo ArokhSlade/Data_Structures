@@ -37,6 +37,8 @@ struct RedBlackTree {
 		void rotate_left();
 		bool is_black();
 		bool is_root();
+		bool is_leaf();
+		bool is_3_node();
 		Node *fix_up();
 		
 		//store contained values in order
@@ -146,6 +148,19 @@ void RedBlackTree<Tval>::Node::append_leaf(RedBlackTree::Node *node){
 template<typename Tval>
 bool RedBlackTree<Tval>::Node::is_root(){
 	bool result = parent == nullptr;
+	return result;
+}
+
+template<typename Tval>
+bool RedBlackTree<Tval>::Node::is_leaf(){
+	bool result = left == nullptr;
+		 result = result && right == nullptr;
+	return result;
+}
+
+template<typename Tval>
+bool RedBlackTree<Tval>::Node::is_3_node(){
+	bool result = left && left->is_red;
 	return result;
 }
 
