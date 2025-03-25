@@ -17,7 +17,7 @@ template<typename Tval>
 struct RedBlackTree {	
 	
 	struct Node {
-		Tval value;
+		Tval key;
 		
 		Node *parent = nullptr;
 		Node *left = nullptr;
@@ -25,9 +25,9 @@ struct RedBlackTree {
 		
 		bool is_red = false;
 		
-		Node *find(Tval search_value);		
+		Node *find(Tval search_key);		
 		int count();		
-		Node *get_insertion_parent(Tval new_value);
+		Node *get_insertion_parent(Tval new_key);
 		void attach_child(Node *Node);
 		void append_leaf(Node *new_node);
 		Node *add(const Tval&);
@@ -40,22 +40,26 @@ struct RedBlackTree {
 		bool is_leaf();
 		bool is_3_node();
 		bool is_2_node();
+		Node *get_sibling();
+		Node *get_far_sibling();
 		Node *fix_up();
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
 		Node *replace_child(Node *old_child, Node *new_child);
-		Node *scooch_to_right();
-		Node *scooch_to_left();
-		void squash_right();
-		void squash_right_parent(); //TODO fix this mess
-		void squash_middle_parent(); 
-		void squash_left();		
-		Node *walk_down(Tval target);
+		Node *shift();
+		Node *shift_right();
+		Node *shift_left();
+		Node *far_shift();		
+		void squash();
+		Node *far_squash();
+		Node *nearest_node(Tval target_key);
+		Node *walk_down_step_root(Tval target_key);
+		Node *walk_down_step(Tval target_key);
 		
-		//store contained values in order
+		//store contained keys in order
 		Tval * inorder_to_buf(Tval *out);	
 		
-		Node(Tval value_) :value{value_}
+		Node(Tval key_) :key{key_}
 		{}
 		
 		void debug_add_left(Tval new_val, bool set_red);
@@ -66,9 +70,11 @@ struct RedBlackTree {
 	Node *root;
 	
 	void add(const Tval& new_val);
+	Node *walk_down(Tval target_key);
+	void update_root();
 	
-	RedBlackTree(Tval value_)
-	:root{new Node{value_}}
+	RedBlackTree(Tval key_)
+	:root{new Node{key_}}
 	{}	
 	
 	
@@ -87,14 +93,14 @@ int RedBlackTree<Tval>::Node::count() {
 }
 
 template<typename Tval>
-RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::find(Tval search_value) {	
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::find(Tval search_key) {	
 	Node *result = nullptr;
-	if (value == search_value) {
+	if (key == search_key) {
 		result = this;
-	} else if (search_value < value) {
-		result = left ? left -> find( search_value ) : nullptr;
+	} else if (search_key < key) {
+		result = left ? left -> find( search_key ) : nullptr;
 	} else {
-		result = right ? right -> find( search_value ) : nullptr ;
+		result = right ? right -> find( search_key ) : nullptr ;
 	}
 	
 	return result;
@@ -106,7 +112,7 @@ Tval *RedBlackTree<Tval>::Node::inorder_to_buf(Tval *out) {
 	Tval *next_slot = out;
 	
 	next_slot = left ? left -> inorder_to_buf(next_slot) : next_slot;
-	*next_slot++ = value;
+	*next_slot++ = key;
 	next_slot = right ? right -> inorder_to_buf(next_slot) : next_slot;
 	
 	return next_slot;
@@ -117,16 +123,16 @@ Tval *RedBlackTree<Tval>::Node::inorder_to_buf(Tval *out) {
  *  @return nullptr if already exists, pointer to parent otherwise
  */
 template<typename Tval>
-RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_insertion_parent(Tval new_value) {
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_insertion_parent(Tval new_key) {
 	
 	RedBlackTree::Node *result = nullptr;
 	
-	if (value == new_value) {
+	if (key == new_key) {
 		result = nullptr;
-	} else if (new_value < value) {
-		result = left ? left -> get_insertion_parent( new_value ) : this;
+	} else if (new_key < key) {
+		result = left ? left -> get_insertion_parent( new_key ) : this;
 	} else {
-		result = right ? right -> get_insertion_parent( new_value ) : this;
+		result = right ? right -> get_insertion_parent( new_key ) : this;
 	}
 	
 	return result;
@@ -135,8 +141,8 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_insertion_parent(Tval ne
 
 template<typename Tval>
 void RedBlackTree<Tval>::Node::attach_child(RedBlackTree::Node *node) {
-	assert(node->value != value);
-	if (node->value < value) {
+	assert(node->key != key);
+	if (node->key < key) {
 		assert(left == nullptr);
 		left = node;
 	} else {
@@ -154,7 +160,7 @@ void RedBlackTree<Tval>::Node::append_leaf(RedBlackTree::Node *node){
 	//percolate down from root and attach to parent
 	
 	if (!node) return;
-	RedBlackTree::Node *insertion_parent = get_insertion_parent( node->value );
+	RedBlackTree::Node *insertion_parent = get_insertion_parent( node->key );
 	insertion_parent->attach_child(node);
 	
 	return;
@@ -191,6 +197,33 @@ bool RedBlackTree<Tval>::Node::is_3_node(){
 }
 
 template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_sibling(){		
+	Node *sibling = nullptr;
+	if (parent) {
+		if (parent->left == this) {
+			sibling = parent->right;
+		} else {
+			sibling = parent->left;
+		}
+	}
+	assert(sibling); //NOTE(Gerald, 2025 03 25): for now, assume this function is only called when sibling's existed is expected
+	return sibling;
+}
+
+template<typename Tval>
+//sibling in the sense of belonging to the same 3-node.
+//assumes this is the right child of a black node whose left child is red
+//gets the nearest (left) sibling. "far" in the sense, that it has another parent.
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::get_far_sibling(){		
+	assert(parent && parent->right == this);
+	assert(parent->is_black());
+	assert(parent->left && parent->left->is_red);
+	
+	Node *sibling = parent->left->right;
+	return sibling;
+}
+
+template<typename Tval>
 void RedBlackTree<Tval>::Node::flip_colors_with_parent(){
 	assert(parent);
 	assert(is_red != parent->is_red);
@@ -212,20 +245,6 @@ void RedBlackTree<Tval>::Node::flip_colors_with_children(){
 	return;
 }
 
-
-template<typename Tval>
-RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::replace_child(typename RedBlackTree<Tval>::Node *old_child, typename RedBlackTree<Tval>::Node *new_child) {
-	RedBlackTree<Tval>::Node *replaced = nullptr;
-	
-	if (left == old_child) {
-		replaced = replace_left(new_child);
-	} else if (right == old_child) {
-		replaced = replace_right(new_child);
-	} else {
-		assert(false);
-	}
-	return replaced;
-}
 
 template<typename Tval>
 //"become the right child of my left child"
@@ -334,6 +353,14 @@ void RedBlackTree<Tval>::add(const Tval& new_val) {
 	return;
 }
 
+template<typename Tval>
+void RedBlackTree<Tval>::update_root() {
+	while (root->parent) {
+		root = root->parent;
+	}
+	return;
+}
+
 
 template <typename Tval>
 int get_shortest_path_length(typename RedBlackTree<Tval>::Node *tree) {
@@ -411,7 +438,7 @@ bool is_red_black_tree(typename RedBlackTree<Tval>::Node *tree) {
 
 
 template <typename Tval>
-void print(Tval value) {	
+void print(Tval key) {	
 	assert(false);
 	return;
 }
@@ -463,7 +490,7 @@ void print_red_black_tree_node(typename RedBlackTree<Tval>::Node *tree, int inde
 	if(tree->is_red) {
 		print('*');
 	}
-	print(tree->value);
+	print(tree->key);
 	print('\n');
 	
 	print_red_black_tree_node<Tval>(tree->left, indent+1);
@@ -473,15 +500,28 @@ void print_red_black_tree_node(typename RedBlackTree<Tval>::Node *tree, int inde
 }
 
 template <class T>
-RedBlackTree<T> rb_from_values(T *values, int count) {
-	RedBlackTree<T> rb{values[0]};
+RedBlackTree<T> rb_from_keys(T *keys, int count) {
+	RedBlackTree<T> rb{keys[0]};
 	for (int i = 1 ; i < count ; ++i) {
-		rb.add(values[i]);
+		rb.add(keys[i]);
 	}
 	
 	return rb;
 }
 
+template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::replace_child(typename RedBlackTree<Tval>::Node *old_child, typename RedBlackTree<Tval>::Node *new_child) {
+	RedBlackTree<Tval>::Node *replaced = nullptr;
+	
+	if (left == old_child) {
+		replaced = replace_left(new_child);
+	} else if (right == old_child) {
+		replaced = replace_right(new_child);
+	} else {
+		assert(false);
+	}
+	return replaced;
+}
 
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_right(RedBlackTree<T>::Node *new_right) {
@@ -506,269 +546,172 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_left(RedBlackTree<T>::Node
 	return old_left;
 }
 
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift_right() {
+	assert(left && left->is_3_node() && right && right->is_2_node());
+	//assert(parent);
+	
+	Node *replacement = left;
+	rotate_right();
+	rotate_left();
+	
+	return replacement;	
+}
 
 template<class T>
-RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_right() {
-	using RBNode = RedBlackTree<T>::Node;
-	RBNode *new_root = nullptr;
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift_left() {
+	assert(left && left->is_2_node() && right && right->is_3_node());
+	//assert(parent);
+	
+	right->rotate_right();
+	rotate_left();
+	Node *replacement = parent;
+	
+	return replacement;	
+}
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift() {
+	assert(left && right);
+	Node *replacement = nullptr;
+	
+	if (left->is_2_node()) {
+		replacement = shift_left();
+	} else {
+		replacement = shift_right();
+	}
+	
+	return replacement;
+}
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::far_shift() {
+	//supposed to solve a specific case
+	assert(left && right && left->right && left->right->left);
+	assert(left->is_red && left->right->left->is_red);
+	left->rotate_left();
+	left->left->right->is_red = false;
+	rotate_right(); //become the right child of my left child.
+	Node *replacement = parent;
+	rotate_left();
+	is_red = false;
+	
+	return replacement;
+}
+
+
+template<class T>
+void RedBlackTree<T>::Node::squash() {
+	assert(left && left->is_2_node() && right && right->is_2_node());
+	left->is_red = right->is_red = true;
+	is_red = false;
+	return;
+}
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::far_squash() {
+	assert(left && right);
+	
+	rotate_right();
+	squash();	
+	Node *replacement = parent;
+	
+	return replacement;
+}
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::nearest_node(T target_key) {
+	if (target_key == key) {
+		return this;
+	} else if (target_key < key) {
+		return left;
+	} else { //target_key > key
+		return right;
+	}
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down_step_root(T target_key) {
+	assert(is_root());
+	if (!left && !right) {
+		assert(target_key == key);
+		return this; //special case handled in walk_down_step
+	}
 	
 	if (is_3_node()) {
-		Node *old_parent = parent;
-			
-		assert(left->is_red);
-		assert(left && left->right->is_3_node() && right);
-		Node *replacement = left->right;		
-				
-		Node *new_right = right->replace_left(this);
-		Node *new_left = replacement->replace_right(right);
-		Node *lost_child = replacement->replace_left(left);
-		lost_child->is_red = false;
-		left->replace_right(lost_child);
-		
-		replace_left(new_left);
-		replace_right(new_right);
-		is_red = true;
-		
-		replacement->parent = old_parent;
-		if (old_parent) {
-			if (old_parent->left == this) {
-				old_parent->left = replacement;
-			} else { //old_parent->right == this
-				assert(old_parent->right == this);
-				old_parent->right = replacement;
-			}
+		return nearest_node(target_key);
+	}
+	
+	if (left && left->is_2_node() && right && right->is_2_node()) {
+		squash();
+		return nearest_node(target_key);
+	}
+	
+	//one child is 3-node
+	if (target_key >= key) {
+		if (right->is_2_node()) {
+			shift_right();
+			return parent; //old right is now our parent, target_key could be greater than theirs
+		} else if (target_key > key) {
+			return right;
+		} else { // target_key == key
+			return this; //doubly-special case. returning a 2-node without parent. handled in walk_down_step()
+		}
+	} else { // target_key < key
+		if (left->is_2_node()) {
+			shift_left();
+			return this;
 		} else {
-			new_root = replacement;
+			return left;
 		}
-	} else if (is_red) { //identical transformations to root case
-		Node *old_parent = parent;
-		
-		assert(left && left->is_3_node() && right);
-		
-		Node *replacement = left;
-		replacement->left->is_red = false;
-		Node *new_left = replacement->replace_right(right);
-		
-		Node *new_right = right->replace_left(this);
-		
-		replace_left(new_left);
-		assert(!left || left->parent == this);
-		
-		replace_right(new_right);
-		assert(!right || right->parent == this);
-		
-		assert(is_red);
-		
-		assert(old_parent);
-		if (old_parent->left == this) {
-			old_parent->replace_left(replacement);
-		} else { //old_parent->right == this
-			assert(old_parent->right == this);
-			old_parent->replace_right(replacement);
-		}
-	} else {		
-		assert(is_root()); //should only happen during walk_down inside root case
-		assert(left && left->is_3_node() && right);
-		
-		new_root = left;
-		new_root->left->is_red = false;
-		RBNode *new_left = new_root->replace_right(right);		
-		
-		RBNode *new_right = right->replace_left(this);
-		
-		
-		replace_left(new_left);
-		assert(!left || left->parent == this);
-		
-		replace_right(new_right);
-		assert(!right || right->parent == this);
-		
-		is_red = true;		
 	}
 	
-	return new_root;
+	assert(false);
+	return nullptr;
 }
 
 template<class T>
-RedBlackTree<T>::Node *RedBlackTree<T>::Node::scooch_to_left() {
-	using RBNode = RedBlackTree<T>::Node;
-	RBNode *new_root = nullptr;
-	
-	if (is_red) {
-		assert(!left->is_red);		
-		assert(right && right->is_3_node() && left);		
-		
-		left->is_red = true;
-		is_red = false;
-		
-		RBNode *old_parent = parent;
-		
-		RBNode *new_parent = right->left;
-		assert(new_parent->is_red);		
-		
-		RBNode *new_right = new_parent->replace_left(this);
-		RBNode *lost_child = new_parent->replace_right(new_parent->parent);
-		new_parent->right->replace_left(lost_child);
-		
-		replace_right(new_right);
-		
-		assert(old_parent->left == this);
-		old_parent->replace_left(new_parent);
-		
-		
-		assert(left->is_red);
-		assert(parent == new_parent && new_parent ->left == this);
-		assert(!new_parent->right || new_parent->right->parent == new_parent);
-		assert(!lost_child || lost_child->parent->parent == new_parent);
-		assert(!new_parent->right || new_parent->right->left == lost_child);		
-		assert(!right || right->parent == this);
-		
-	} else {		
-		assert(is_root()); //should only happen during walk_down inside root case
-		assert(right && right->is_3_node() && left);
-		
-		left->is_red = true;
-		
-		new_root = right->left;
-		new_root->is_red = false;
-		
-		RBNode *new_right = new_root->replace_left(this);
-		RBNode *lost_child = new_root->replace_right(new_root->parent);
-		new_root->right->replace_left(lost_child);
-		
-		replace_right(new_right);
-		
-		assert(left->is_red);
-		assert(parent == new_root && new_root->left == this);
-		assert(!new_root->right || new_root->right->parent == new_root);
-		assert(!lost_child || lost_child->parent->parent == new_root);
-		assert(!new_root->right || new_root->right->left == lost_child);
-		assert(!right || right->parent == this);
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down_step(T target_key) {
+	if (is_root()) { //special case where walk_down_step_root returned itself as 2-node
+		assert(target_key == key); 
+		return this;
 	}
 	
-	return new_root;
-}
-
-template<class T>
-//merge parent and right 2-node sibling into one 4-node
-//TODO: this should operate relative to parent, not relative to child
-//TODO: this should be called squash_left, because it's a red parent
-void RedBlackTree<T>::Node::squash_right() {
-	is_red = true;
-	assert(parent->right->is_black());
-	parent->right->is_red = true;
-	parent->is_red = false;
-	return;
-}
-
-template<class T>
-void RedBlackTree<T>::Node::squash_right_parent() {	
-	Node *old_parent = parent;
-	
-	right->is_red = true;
-	
-	assert(left->is_red);
-	left->is_red = false;
-	
-	Node *new_left = left->replace_right(this);
-	replace_left(new_left);
-	left->is_red = true;
-	assert(!is_red);
-	
-	assert(old_parent);
-	if (old_parent->left == this) {
-		old_parent->replace_left(parent);
-	} else {
-		assert(old_parent->right == this);
-		old_parent->replace_right(parent);
+	if (is_3_node() || is_red) {
+		return nearest_node(target_key);
 	}
 	
-	
-	return;
-}
-
-template<class T>
-void RedBlackTree<T>::Node::squash_middle_parent() {	
-	assert(is_red);
-	assert(left && left->is_black());
-	assert(right && right->is_black());
-	
-	is_red = false;
-	left->is_red = right->is_red = true;
-	
-	
-	return;
-}
-
-
-template<class T>
-RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
-	
-	// return value, used by RedBlackTree::delete()
-	Node *new_root = nullptr;
-	
-	if (is_root()) {
-		
-		if (is_3_node()) {
-			// nothing to be done
-			
-		} else if (left && right && left->is_2_node() && right->is_2_node()){
-			// merge 3 2-nodes into 1 4-node			
-			left->is_red = right->is_red = true;
-			
-		} else if (target > value) {
-			
-			if (right->is_2_node()) {
-				new_root = scooch_to_right();
-			} else {
-				// nothing to be done
-			}
-		} else if (target < value) { // target < value
-		
-			if (left->is_2_node()) {
-				new_root = scooch_to_left();
-			} else {
-				//nothing to be done
-			}
-		} else { //target == value
-			//todo
+	//i am a black 2-node
+	if (parent->is_red) {
+		if (get_sibling()->is_2_node()) {
+			parent->squash();
+			return nearest_node(target_key);
+		} else { // sibling is 3-node
+			parent->shift();
+			return nearest_node(target_key);
+		}	
+	} else { // parent is black
+		// i am black right child of 3-node
+		if (get_far_sibling()->is_2_node()) {
+			parent->far_squash();
+			return nearest_node(target_key);
+		} else {
+			parent->far_shift();
+			return nearest_node(target_key);
 		}
-	} else { //in-between root and leaf
-		if (is_leaf()) {
-			printf("is_leaf...\n");
-		}
-		if (is_3_node() || is_red) {
-			//nothing to be done
-		} else if (parent->left == this) {
-			assert(parent->is_red);
-			if (parent->right->is_2_node()) {
-				squash_right();
-			} else {
-				new_root = parent->scooch_to_left();
-			}
-		} else { // parent->right == this
-			if (parent->is_black()) {
-				Node *middle = parent->left->right;
-				assert(middle);
-				if (middle->is_2_node()) {
-					parent->squash_right_parent();
-				} else { //middle->is_3_node()
-					new_root = parent->scooch_to_right();
-				}
-			} else { // this is the middle child of a 3-node
-				Node *sibling = parent->left;
-				if (sibling->is_2_node()) {
-					parent->squash_middle_parent();
-				} else { //sibling->is_3_node()
-					new_root = parent->scooch_to_right();
-				}
-			}
-			
-		}
-		
 	}
 	
-	return new_root;
+	assert(false);
+	return nullptr;
+}
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::walk_down(T target_key) {
+	Node *target_node = root->walk_down_step_root(target_key);
+	target_node = root->walk_down_step(target_key);
+	
+	return target_node;
 }
 
 template<class T>

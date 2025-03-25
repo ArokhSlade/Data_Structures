@@ -31,21 +31,21 @@ using Node = RBTree<T>::Node;
 using std::cout;
 
 template<class T>
-void print_test(char *name, T *values, int count, RBTree<T> *rb) {
+void print_test(char *name, T *keys, int count, RBTree<T> *rb) {
 	cout << "test : " << name << '\n';
-	cout << array_to_string(values, count) << '\n';
+	cout << array_to_string(keys, count) << '\n';
 	print(rb);
 	return;
 }
 
 void test_01() {
-	int test_value = 1;
-	RBTree<int> rb{test_value};
-	Node<int> *root = rb.root->find(test_value);
+	int test_key = 1;
+	RBTree<int> rb{test_key};
+	Node<int> *root = rb.root->find(test_key);
 	
 	bool OK = true;
 	OK &= root != nullptr;
-	OK &= root->value == test_value;
+	OK &= root->key == test_key;
 	
 	cout << "test: find root\n";	
 	cout << (OK ? "OK" : "ERROR") << "\n";	
@@ -56,8 +56,8 @@ void test_01() {
 
 
 void test_02() {
-	int test_value = 1;
-	RBTree<int> rb{test_value};	
+	int test_key = 1;
+	RBTree<int> rb{test_key};	
 	rb.add(-1);
 		
 	bool OK = true;
@@ -73,8 +73,8 @@ void test_02() {
 
 
 void test_03() {
-	int test_value = 0;
-	RBTree<int> rb{test_value};
+	int test_key = 0;
+	RBTree<int> rb{test_key};
 	rb.add(-1);
 	rb.add(1);
 		
@@ -91,7 +91,7 @@ void test_03() {
 		OK &= out[i] == exp[i];
 	}	
 	
-	cout << "test: add 3 elements and output the values in-order\n";
+	cout << "test: add 3 elements and output the keys in-order\n";
 	cout << "result  : " << array_to_string<int>(out, array_count(out)) << "\n";
 	cout << "expected: " << array_to_string<int>(exp, array_count(exp)) << "\n";
 	cout << (OK ? "OK" : "ERROR") << "\n";	
@@ -151,7 +151,7 @@ void test_05(){
 	
 	rb.root->inorder_to_buf(out);
 	
-	cout << "test: add 6 elements unsorted, and output the values in-order\n";
+	cout << "test: add 6 elements unsorted, and output the keys in-order\n";
 	cout << "result  : " << array_to_string<int>(out, array_count(out)) << "\n";
 	cout << "expected: " << array_to_string<int>(exp, array_count(exp)) << "\n";	
 	cout << "\n";
@@ -222,57 +222,57 @@ void test_07(){
 
 void test_08(){
 	
-	int values[] = {0,-10};
-	RBTree<int> rb{values[0]};
+	int keys[] = {0,-10};
+	RBTree<int> rb{keys[0]};
 	
-	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.add(values[i]);
+	for (int i = 1 ; i < array_count(keys) ; i++) {
+		rb.add(keys[i]);
 	}	
 	
 	cout << "test: red node\n";
-	cout << array_to_string(values, array_count(values)) << '\n';
+	cout << array_to_string(keys, array_count(keys)) << '\n';
 	print(&rb);
 }
 
 void test_09(){
 	
-	int values[] = {0,-10,5,-6,3,8,-5};
-	RBTree<int> rb{values[0]};
+	int keys[] = {0,-10,5,-6,3,8,-5};
+	RBTree<int> rb{keys[0]};
 	
-	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.add(values[i]);
+	for (int i = 1 ; i < array_count(keys) ; i++) {
+		rb.add(keys[i]);
 	}	
 	
 	cout << "test: print(tree)\n";
-	cout << array_to_string(values, array_count(values)) << '\n';
+	cout << array_to_string(keys, array_count(keys)) << '\n';
 	print(&rb);
 }
 
 void test_10(){
 	
-	char values[] = {'S','E','A','R','C','H','E','X','A','M','P','L','E'};
-	RBTree<char> rb{values[0]};
+	char keys[] = {'S','E','A','R','C','H','E','X','A','M','P','L','E'};
+	RBTree<char> rb{keys[0]};
 	
-	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.add(values[i]);
+	for (int i = 1 ; i < array_count(keys) ; i++) {
+		rb.add(keys[i]);
 	}	
 	
 	cout << "test: \n";
-	cout << array_to_string(values, array_count(values)) << '\n';
+	cout << array_to_string(keys, array_count(keys)) << '\n';
 	print(&rb);
 }
 
 void test_11(){
 	
-	char values[] = {'A','C','E','H','L','M','P','R','S','X'};
-	RBTree<char> rb{values[0]};
+	char keys[] = {'A','C','E','H','L','M','P','R','S','X'};
+	RBTree<char> rb{keys[0]};
 	
-	for (int i = 1 ; i < array_count(values) ; i++) {
-		rb.add(values[i]);
+	for (int i = 1 ; i < array_count(keys) ; i++) {
+		rb.add(keys[i]);
 	}	
 	
 	cout << "test: \n";
-	cout << array_to_string(values, array_count(values)) << '\n';
+	cout << array_to_string(keys, array_count(keys)) << '\n';
 	print(&rb);
 }
 
@@ -283,10 +283,10 @@ void test_12() {
 	> *-1   -> > *-1	
 	*/
 	char name[] = "walk_down at root, root is 3-node (has red child)";
-	int values[] = {0,-1};
-	RBTree<int> rb = rb_from_values<int>(values, 2);
-	print_test(name, values, 2, &rb);
-	rb.root->walk_down(-1);
+	int keys[] = {0,-1};
+	RBTree<int> rb = rb_from_keys<int>(keys, 2);
+	print_test(name, keys, 2, &rb);
+	rb.root->walk_down_step_root(-1);
 	print(&rb);
 	
 	return;
@@ -300,10 +300,10 @@ void test_13() {
 	>  1    -> > * 1
 	*/
 	char name[] = "walk_down at root, both children 2-nodes";
-	int values[] = {0,-1,1};
-	RBTree<int> rb = rb_from_values<int>(values, 3);	
-	print_test(name, values, 3, &rb);
-	rb.root->walk_down(1);
+	int keys[] = {0,-1,1};
+	RBTree<int> rb = rb_from_keys<int>(keys, 3);	
+	print_test(name, keys, 3, &rb);
+	rb.root->walk_down_step_root(1);
 	print(&rb);
 	
 	return;
@@ -318,10 +318,10 @@ void test_14() {
 	 |*1
 	*/
 	char name[] = "walk_down at root, right child is 3-node, target is greater (2) -> do nothing";
-	int values[] = {0,-1,2,1};
-	RBTree<int> rb = rb_from_values<int>(values, 4);
-	print_test(name, values, 4, &rb);
-	rb.root->walk_down(2);
+	int keys[] = {0,-1,2,1};
+	RBTree<int> rb = rb_from_keys<int>(keys, 4);
+	print_test(name, keys, 4, &rb);
+	rb.root->walk_down_step_root(2);
 	cout << "result: \n";
 	print(&rb);
 	
@@ -332,9 +332,9 @@ void test_14() {
 
 void test_15() {	
 	char name[] = "replace_right(-2)";
-	int values[] = {0,-1,1,-2};
-	RBTree<int> rb = rb_from_values<int>(values, 4);
-	print_test(name, values, 4, &rb);
+	int keys[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_keys<int>(keys, 4);
+	print_test(name, keys, 4, &rb);
 	Node<int> *new_right = rb.root->left->left;
 	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
 	cout << "result: \n";
@@ -348,10 +348,10 @@ void test_15() {
 }
 
 void test_16() {	
-	char name[] = "replace_right (-1) with nullptr";
-	int values[] = {0,-1};
-	RBTree<int> rb = rb_from_values<int>(values, 2);
-	print_test(name, values, 2, &rb);
+	char name[] = "replace_right (-1) where right is nullptr";
+	int keys[] = {0,-1};
+	RBTree<int> rb = rb_from_keys<int>(keys, 2);
+	print_test(name, keys, 2, &rb);
 	Node<int> *new_right = rb.root->left;
 	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
 	cout << "result: \n";
@@ -372,13 +372,11 @@ void test_17() {
 	|1      ->  |*0
 	*/
 	char name[] = "walk_down at root, right child is 2-node, target is greater (1) -> scooch";
-	int values[] = {0,-1,1,-2};
-	RBTree<int> rb = rb_from_values<int>(values, 4);
-	print_test(name, values, 4, &rb);
-	Node<int> *new_root = rb.root->walk_down(1);
-	if (new_root) {
-		rb.root = new_root;
-	}
+	int keys[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_keys<int>(keys, 4);
+	print_test(name, keys, 4, &rb);
+	rb.root->walk_down_step_root(1);
+	rb.update_root();
 	cout << "result: \n";
 	print(&rb);
 	
@@ -395,10 +393,10 @@ void test_18() {
 	|1 
 	*/
 	char name[] = "walk_down at root, left child is 3-node, target is less (-2) -> do nothing";
-	int values[] = {0,-1,1,-2};
-	RBTree<int> rb = rb_from_values<int>(values, 4);
-	print_test(name, values, 4, &rb);
-	rb.root->walk_down(-2);
+	int keys[] = {0,-1,1,-2};
+	RBTree<int> rb = rb_from_keys<int>(keys, 4);
+	print_test(name, keys, 4, &rb);
+	rb.root->walk_down_step_root(-2);
 	cout << "result: \n";
 	print(&rb);
 	
@@ -415,13 +413,11 @@ void test_19() {
 	 |*1   ->  |2
 	*/
 	char name[] = "walk_down at root, left child is 2-node, target is less (-1) -> scooch left";
-	int values[] = {0,-1,2,1};
-	RBTree<int> rb = rb_from_values<int>(values, 4);
-	print_test(name, values, 4, &rb);
-	Node<int> *new_root = rb.root->walk_down(-1);
-	if (new_root) {
-		rb.root = new_root;
-	}
+	int keys[] = {0,-1,2,1};
+	RBTree<int> rb = rb_from_keys<int>(keys, 4);
+	print_test(name, keys, 4, &rb);
+	rb.root->walk_down_step_root(-1);
+	rb.update_root();
 	cout << "result: \n";
 	print(&rb);
 	
@@ -430,10 +426,9 @@ void test_19() {
 
 
 void test_20() {
-	/*
-	walk_down case in-between #0:
-	p
-	|-2
+	/*	
+	0
+	|-2  <------
 	 |*-1
 	|1
 	
@@ -449,7 +444,7 @@ void test_20() {
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
-	rb.root->left->walk_down(-2);
+	rb.root->left->walk_down_step(-2);
 	
 	cout << "result: \n";
 	print(&rb);
@@ -482,7 +477,7 @@ void test_21() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->left->left->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -517,7 +512,7 @@ void test_22() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->left->left->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -551,7 +546,7 @@ void test_23() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 5\n";
-	rb.root->right->right->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->right->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -587,7 +582,7 @@ void test_24() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 6\n";
-	rb.root->right->right->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->right->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -622,7 +617,7 @@ void test_25() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 3\n";
-	rb.root->right->left->right->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->left->right->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -658,7 +653,7 @@ void test_26() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 3\n";
-	rb.root->right->left->right->walk_down(999); //target doesn't matter for in-between case
+	rb.root->right->left->right->walk_down_step(999); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -698,7 +693,7 @@ void test_27() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 10\n";
-	rb.root->left->left->walk_down(10); //target doesn't matter for in-between case
+	rb.root->left->left->walk_down_step(10); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -739,7 +734,7 @@ void test_28() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: -11\n";
-	rb.root->left->left->left->walk_down(-11); //target doesn't matter for in-between case
+	rb.root->left->left->left->walk_down_step(-11); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -780,7 +775,7 @@ void test_29() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down(1); //target doesn't matter for in-between case
+	rb.root->right->left->left->walk_down_step(1); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -821,7 +816,7 @@ void test_30() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 9\n";
-	rb.root->right->right->walk_down(9); //target doesn't matter for in-between case
+	rb.root->right->right->walk_down_step(9); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -862,7 +857,7 @@ void test_31() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 4\n";
-	rb.root->right->left->right->walk_down(4); //target doesn't matter for in-between case
+	rb.root->right->left->right->walk_down_step(4); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -894,7 +889,7 @@ void test_32() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: -10\n";
-	rb.root->left->left->walk_down(-10); //target doesn't matter for in-between case
+	rb.root->left->left->walk_down_step(-10); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -925,7 +920,7 @@ void test_33() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: -3\n";
-	rb.root->left->right->walk_down(-3); //target doesn't matter for in-between case
+	rb.root->left->right->walk_down_step(-3); //target doesn't matter for in-between case
 	
 	cout << "result: \n";
 	print(&rb);
@@ -956,10 +951,8 @@ void test_34() {
 	cout << "test: " << name << '\n';
 	print(&rb);
 	cout << "current node: 5\n";
-	Node<int> *new_root = rb.root->right->walk_down(5); //target doesn't matter for in-between case
-	if (new_root) {
-		rb.root = new_root;
-	}
+	rb.root->right->walk_down_step(5); //target doesn't matter for in-between case
+	rb.update_root();
 	
 	cout << "result: \n";
 	print(&rb);
