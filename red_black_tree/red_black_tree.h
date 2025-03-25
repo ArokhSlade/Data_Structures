@@ -43,6 +43,7 @@ struct RedBlackTree {
 		Node *fix_up();
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
+		Node *replace_child(Node *old_child, Node *new_child);
 		Node *scooch_to_right();
 		Node *scooch_to_left();
 		void squash_right();
@@ -211,50 +212,54 @@ void RedBlackTree<Tval>::Node::flip_colors_with_children(){
 	return;
 }
 
+
 template<typename Tval>
-void RedBlackTree<Tval>::Node::rotate_right(){
-	RedBlackTree<Tval>::Node *old_parent = parent;
-	assert(left);
-	parent = left;
-	left = parent->right;
-	if (left){
-		left->parent = this;
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::replace_child(typename RedBlackTree<Tval>::Node *old_child, typename RedBlackTree<Tval>::Node *new_child) {
+	RedBlackTree<Tval>::Node *replaced = nullptr;
+	
+	if (left == old_child) {
+		replaced = replace_left(new_child);
+	} else if (right == old_child) {
+		replaced = replace_right(new_child);
+	} else {
+		assert(false);
 	}
-	parent->right = this;
+	return replaced;
+}
+
+template<typename Tval>
+//"become the right child of my left child"
+void RedBlackTree<Tval>::Node::rotate_right(){
+	assert(left);
+	
+	RedBlackTree<Tval>::Node *old_parent = parent;
+	
+	Node *new_left = left->replace_right(this);
+	replace_left(new_left);	
 	
 	parent->parent = old_parent;
-	if (old_parent) {
-		if (old_parent->left == this) {
-			old_parent->left = parent;
-		} else {
-			assert(old_parent->right == this);
-			old_parent->right = parent;
-		}
-	}	
-	
+	if(old_parent) {
+		old_parent->replace_child(this, parent);
+	}
+
 	return;
 }
 
 template<typename Tval>
+//"become the left child of my right child"
 void RedBlackTree<Tval>::Node::rotate_left(){
-	RedBlackTree<Tval>::Node *old_parent = parent;
 	assert(right);
-	parent = right;
-	right = parent->left;
-	if (right) {
-		right->parent = this;
-	}
-	parent->left = this;
 	
+	RedBlackTree<Tval>::Node *old_parent = parent;
+	
+	Node *new_right = right->replace_left(this);
+	replace_right(new_right);
+		
 	parent->parent = old_parent;
 	if(old_parent) {
-		if (old_parent->left == this){
-			old_parent->left = parent;
-		} else {
-			assert(old_parent->right == this);
-			old_parent->right = parent;
-		}
+		old_parent->replace_child(this, parent);
 	}
+	
 	return;
 }
 
@@ -718,13 +723,15 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down(T target) {
 			} else {
 				// nothing to be done
 			}
-		} else { // target < value
+		} else if (target < value) { // target < value
 		
 			if (left->is_2_node()) {
 				new_root = scooch_to_left();
 			} else {
 				//nothing to be done
 			}
+		} else { //target == value
+			//todo
 		}
 	} else { //in-between root and leaf
 		if (is_leaf()) {
