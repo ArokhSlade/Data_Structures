@@ -709,7 +709,7 @@ void test_27() {
 
 void test_28() {
 	/*
-	walk_down case leaf #0:
+	walk_down case leaf #1:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -750,7 +750,7 @@ void test_28() {
 
 void test_29() {
 	/*
-	walk_down case leaf #0:
+	walk_down case leaf #2:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -763,7 +763,7 @@ void test_29() {
 	 |9     ->  |9
 	 
 	*/
-	char name[] = "walk_down at leaf: node (1) is left child of red node";
+	char name[] = "walk_down at leaf: 2-node with 2-node sibling: (1) is left child of red node -> squash";
 	
 	RBTree<int> rb{0};
 	
@@ -791,7 +791,7 @@ void test_29() {
 
 void test_30() {
 	/*
-	walk_down case leaf #0:
+	walk_down case leaf #3:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -804,7 +804,7 @@ void test_30() {
 	 |9     ->  |9
 	 
 	*/
-	char name[] = "walk_down at leaf: node (9) is right child of black node";
+	char name[] = "walk_down at leaf: 2-node with 2-node sibling: (9) is right child of black node -> squash";
 	
 	RBTree<int> rb{0};
 	
@@ -832,7 +832,7 @@ void test_30() {
 
 void test_31() {
 	/*
-	walk_down case leaf #0:
+	walk_down case leaf #4:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -845,7 +845,7 @@ void test_31() {
 	 |9     ->  |9
 	 
 	*/
-	char name[] = "walk_down at leaf: node (4) is right child of red node";
+	char name[] = "walk_down at leaf: 2-node with 2-node sibling: (4) is right child of red node -> squash";
 	
 	RBTree<int> rb{0};
 	
@@ -871,35 +871,56 @@ void test_31() {
 }
 
 
-void test_32() {
-	//TODO: construct a different test case, parent would be a 3-node during walk-down because of invariant...
+void test_32() {	
 		/*
-	walk_down case leaf #0:
+	walk_down case leaf #5:
 	0		-> 0
-	|-5     -> |-5 
-	 |-10   ->  |-10      <-------leaf = right key in 3-node
-	  |*-11 ->   |*-11    
-	 |-3    ->  |-3
+	|*-5    -> |*-4 
+	 |-10   ->  |-5      <-------leaf = right key in 3-node
+	 |-3    ->   |*-10    
+	  |*-4  ->  |-3
 	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
-	 |9     ->  |9
-	 
 	*/
-	char name[] = "walk_down at leaf: node (-3) is left child with 3-node sibling -> scooch left";
+	char name[] = "walk_down at leaf: 2-node with 3-node sibling: (-10) is left child (of black node) -> scooch left";
 	
 	RBTree<int> rb{0};
 	
-	rb.root->debug_add_left(-5, false);
+	rb.root->debug_add_left(-5, true);
 	rb.root->left->debug_add_left(-10, false);
 	rb.root->left->debug_add_right(-3, false);
-	rb.root->left->left->debug_add_left(-11, true);
+	rb.root->left->right->debug_add_left(-4, true);
 	rb.root->debug_add_right(5, false);
-	rb.root->right->debug_add_left(2, true);
-	rb.root->right->left->debug_add_left(1, false);
-	rb.root->right->left->debug_add_right(4, false);
-	rb.root->right->debug_add_right(9, false);
+	
+	cout << "test: " << name << '\n';
+	print(&rb);
+	cout << "current node: -10\n";
+	rb.root->left->left->walk_down(-10); //target doesn't matter for in-between case
+	
+	cout << "result: \n";
+	print(&rb);
+	
+	return;
+}
+
+void test_33() {
+		/*
+	walk_down case leaf #6:
+	0		-> 0		
+	|*-4 	-> |*-5    
+	 |-5   	->  |-10   
+	  |*-10	->  |-3    
+	 |-3	->   |*-4   <----------
+	|5		-> |5      
+	*/
+	char name[] = "walk_down at leaf: 2-node (-3) is middle child (right child of red parent) with left sibling being a 3-node";
+	
+	RBTree<int> rb{0};
+	
+	rb.root->debug_add_left(-4, true);
+	rb.root->left->debug_add_left(-5, false);
+	rb.root->left->left->debug_add_left(-10, true);
+	rb.root->left->debug_add_right(-3, false);
+	rb.root->debug_add_right(5, false);
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
@@ -912,79 +933,33 @@ void test_32() {
 	return;
 }
 
-void test_33() {
-	/*
-	walk_down case leaf #0:
-	0		-> 0
-	|-5     -> |-5 
-	 |-10   ->  |-10      <-------leaf = right key in 3-node
-	  |*-11 ->   |*-11    
-	 |-3    ->  |-3
-	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
-	 |9     ->  |9
-	 
-	*/
-	char name[] = "walk_down at leaf: node (-10) is right key in 3-node";
-	
-	RBTree<int> rb{0};
-	
-	rb.root->debug_add_left(-5, false);
-	rb.root->left->debug_add_left(-10, false);
-	rb.root->left->debug_add_right(-3, false);
-	rb.root->left->left->debug_add_left(-11, true);
-	rb.root->debug_add_right(5, false);
-	rb.root->right->debug_add_left(2, true);
-	rb.root->right->left->debug_add_left(1, true);
-	rb.root->right->left->debug_add_right(4, true);
-	rb.root->right->debug_add_right(9, false);
-	
-	cout << "test: " << name << '\n';
-	print(&rb);
-	cout << "current node: -10\n";
-	rb.root->left->left->walk_down(10); //target doesn't matter for in-between case
-	
-	cout << "result: \n";
-	print(&rb);
-	
-	return;
-}
-
 void test_34() {
-	/*
-	walk_down case leaf #0:
-	0		-> 0
-	|-5     -> |-5 
-	 |-10   ->  |-10      <-------leaf = right key in 3-node
-	  |*-11 ->   |*-11    
-	 |-3    ->  |-3
-	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
-	 |9     ->  |9
-	 
+		/*
+	walk_down case leaf #7:
+	0		-> -3
+	|*-5    -> |*-5 
+	 |-10   ->  |-10
+	 |-3    ->  |-4 
+	  |*-4  -> |5
+	|5      ->  |*0 	<---------------(5)
 	*/
-	char name[] = "walk_down at leaf: node (-10) is right key in 3-node";
+	char name[] = "walk_down at leaf: 2-node (5) is right child (of black node) with 3-node sibling: -> scooch right";
 	
 	RBTree<int> rb{0};
 	
-	rb.root->debug_add_left(-5, false);
+	rb.root->debug_add_left(-5, true);
 	rb.root->left->debug_add_left(-10, false);
 	rb.root->left->debug_add_right(-3, false);
-	rb.root->left->left->debug_add_left(-11, true);
+	rb.root->left->right->debug_add_left(-4, true);
 	rb.root->debug_add_right(5, false);
-	rb.root->right->debug_add_left(2, true);
-	rb.root->right->left->debug_add_left(1, true);
-	rb.root->right->left->debug_add_right(4, true);
-	rb.root->right->debug_add_right(9, false);
 	
 	cout << "test: " << name << '\n';
 	print(&rb);
-	cout << "current node: -10\n";
-	rb.root->left->left->walk_down(10); //target doesn't matter for in-between case
+	cout << "current node: 5\n";
+	Node<int> *new_root = rb.root->right->walk_down(5); //target doesn't matter for in-between case
+	if (new_root) {
+		rb.root = new_root;
+	}
 	
 	cout << "result: \n";
 	print(&rb);
@@ -1035,7 +1010,8 @@ int main() {
 	test_30();
 	test_31();
 	test_32();
-	// test_33();
+	test_33();
+	test_34();
 	
 	return 0;
 }
