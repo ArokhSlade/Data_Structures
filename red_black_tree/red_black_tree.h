@@ -46,9 +46,11 @@ struct RedBlackTree {
 		Node *get_sibling();
 		Node *get_far_sibling();
 		Node *fix_up();
+		Node *fix_up_until(Node *);
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
 		Node *replace_child(Node *old_child, Node *new_child);
+		Node *replace_with(Node *replacement);
 		Node *shift();
 		Node *shift_right();
 		Node *shift_left();
@@ -58,6 +60,10 @@ struct RedBlackTree {
 		Node *nearest_node(Tval target_key);
 		Node *walk_down_step_root(Tval target_key);
 		Node *walk_down_step(Tval target_key);
+		void enforce_degree_greater_2();
+		Node *remove_min_under_3_node();
+		Node *remove_leaf();
+		Node *descend_left();
 		
 		//store contained keys in order
 		Tval * inorder_to_buf(Tval *out);	
@@ -73,6 +79,7 @@ struct RedBlackTree {
 	Node *root;
 	
 	void add(const Tval& new_val);
+	Node *remove(const Tval& taret_key);
 	Node *walk_down(Tval target_key);
 	void update_root();
 	bool to_string(char *out, int size);
@@ -269,6 +276,14 @@ void RedBlackTree<Tval>::Node::rotate_right(){
 }
 
 template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::replace_with(Node *replacement) {
+	parent->replace_child(this, replacement);	
+	replacement->replace_left(left);
+	replacement->replace_right(right);
+	return this;
+}
+
+template<typename Tval>
 //"become the left child of my right child"
 void RedBlackTree<Tval>::Node::rotate_left(){
 	assert(right);
@@ -329,6 +344,54 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 	return highest_changed;
 }
 
+template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up_until(typename RedBlackTree<Tval>::Node *limit) {	
+	assert(is_red);	
+	
+	if (this == limit) {
+		return this;
+	}
+	//NOTE(Gerald): we track the highest node in the tree that is affected
+	//we return it so tree can check if it's the new root and update if needed
+	//TODO(Gerald): this shouldn't be necessary because we expect to stop before some limit node, thus never affecting the root
+	Node *highest_changed = this; 
+	
+	if (is_root()) {
+		is_red = false;
+		return highest_changed;
+	}
+	
+	assert(parent);
+	
+	if (parent->is_black()) {
+		if (parent->left == this) {
+			//highest_changed = this
+		} else { // this is right child
+			if (!parent->left || parent->left->is_black()) {
+				parent->rotate_left();
+				left->flip_colors_with_parent();
+				//highest_changed = this
+			} else { //parent->left is red
+				parent->flip_colors_with_children();
+				highest_changed = parent->fix_up_until(limit);
+			}
+		}		
+	} else { //parent is red
+		if (parent->left == this) {			
+			assert(parent->parent);
+			parent->parent->rotate_right();
+			is_red = false;
+			highest_changed = parent->fix_up_until(limit);
+		} else { // this is right child
+			parent->rotate_left();
+			parent->rotate_right();
+			left->is_red = false;
+			highest_changed = fix_up_until(limit);
+		}
+	}
+	return highest_changed;
+}
+
 
 template<typename Tval>
 RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::add(const Tval& new_val) {
@@ -348,6 +411,22 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::add(const Tval& new_val) {
 	return highest_changed;
 }
 
+template<class T>
+//TODO: what if replacement has different color than original?
+RedBlackTree<T>::Node *RedBlackTree<T>::remove(const T& target_key) {
+	Node *target_node = walk_down(target_key); 
+	Node *replacement = nullptr;
+	if (target_node->is_leaf()) {
+		replacement = target_node->remove_leaf();		
+	} else {
+		target_node->right->enforce_degree_greater_2();
+		replacement = target_node->right->remove_min_under_3_node();
+		target_node->replace_with(replacement);		
+	}
+	replacement->fix_up();
+	return target_node;
+}
+
 template<typename Tval>
 void RedBlackTree<Tval>::add(const Tval& new_val) {
 	Node *highest_changed = root->add(new_val);
@@ -355,6 +434,26 @@ void RedBlackTree<Tval>::add(const Tval& new_val) {
 		root = highest_changed;
 	}
 	return;
+}
+
+template<class T>
+//I'm a leaf or only-parent of a red child. 
+//after removing myself I return my replacement.
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_leaf() {	
+	assert(is_leaf());
+	assert(!left || left->is_red);	
+	
+	
+	if (left) {		
+		left->is_red = false;
+	}
+	
+	Node *replacement = left ? left : parent;
+	
+	parent->replace_child(this, left);
+	parent = nullptr;
+	
+	return replacement;
 }
 
 template<typename Tval>
@@ -886,6 +985,63 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::walk_down_step(T target_key) {
 	
 	assert(false);
 	return nullptr;
+}
+
+template<class T>
+void RedBlackTree<T>::Node::enforce_degree_greater_2() {
+	assert(!is_root());
+	assert(parent->is_3_node() || parent->is_red);
+	
+	if (is_3_node() || is_red) {
+		return;
+	}
+	
+	//i am a black 2-node
+	if (parent->is_red) {
+		if (get_sibling()->is_2_node()) {
+			parent->squash();
+		} else { // sibling is 3-node
+			parent->shift();
+		}	
+	} else { // parent is black
+		// i am black right child of 3-node
+		if (get_far_sibling()->is_2_node()) {
+			parent->far_squash();
+		} else {
+			parent->far_shift();
+		}
+	}
+	return;
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_min_under_3_node(){
+	assert(parent->is_red || parent->is_3_node());
+	Node *current = this;
+	while (current->left) {
+		current->descend_left();
+	}
+	assert(current->is_red && current->parent->left == current);
+	current->parent->left = nullptr;
+	current->parent->fix_up_until(this);
+	current->parent = nullptr;
+	return current;
+}
+
+
+template<class T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend_left(){
+	assert(parent->left == this);
+	//nothing to do if is_red
+	if (is_black()) {
+		if (get_sibling()->is_2_node()) {
+			parent->squash();
+		} else { //sibling is 3-node
+			parent->shift_left();
+		}
+	}
+	return left;
 }
 
 template<class T>

@@ -1282,9 +1282,63 @@ void test_35(){
 	
 }
 
+void test_36() {
+	
+	/*	
+	0
+	|-5   
+	 |-10   
+	  |*-11 
+	 |-3    
+	|5      
+	 |*2    
+	  |1    
+	  |4    
+	 |9     
+	 
+	*/
+	char name[] = "delete nodes from tree successively";
+	
+	RBTree<int> rb{0};
+	
+	rb.add(-5);
+	rb.add(-10);
+	rb.add(-3);
+	rb.add(-11);
+	rb.add(5);
+	rb.add(2);
+	rb.add(1);
+	rb.add(4);
+	rb.add(9);
+	
+	
+						
+	test_helper_print_before(rb, name);	
+	
+	
+	rb.remove(9);
+	cout << "remove 9\n";
+	print(&rb);
+	
+	rb.remove(-5);
+	cout << "remove 9\n";
+	print(&rb);
+	
+	rb.remove(-10);
+	cout << "remove 9\n";
+	print(&rb);
+	
+
+	rb.remove(2);
+	cout << "remove 9\n";
+	print(&rb);
+	
+	return;
+}
+
 
 int main() {
-	
+	/*
 	test_01();
 	test_02();
 	test_03();
@@ -1327,8 +1381,10 @@ int main() {
 	test_32();
 	test_33();
 	test_34();
-	
+*/	
 	// test_35(); //print test
+	
+	test_36();
 
 	return 0;
 }
