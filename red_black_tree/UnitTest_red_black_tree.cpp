@@ -23,6 +23,23 @@ std::string array_to_string(T *array, int count) {
 	return result;
 }
 
+bool are_strings_equal(char *first, char *second, int count = 0) {
+	bool has_limit = count > 0;
+	bool are_equal = true;
+	for (int i = 0 ; !has_limit || i < count ; ++i, ++first, ++second) {
+		
+		if (*first != *second) {
+			are_equal = false;
+			break;
+		}
+		if (*first == '\0' /* `*second == '\0'` as well*/) {
+			break;
+		}		
+		
+	}
+	return are_equal;	
+}
+
 template <typename T>
 using RBTree = RedBlackTree<T>;
 template <typename T>
@@ -32,11 +49,41 @@ using std::cout;
 
 template<class T>
 void print_test(char *name, T *keys, int count, RBTree<T> *rb) {
-	cout << "test : " << name << '\n';
+	cout << "\ntest : " << name << '\n';
 	cout << array_to_string(keys, count) << '\n';
 	print(rb);
 	return;
 }
+
+
+const int BUF_SIZE = 128;
+
+void test_helper_print_before(RedBlackTree<int>& rb, char *test_name) {
+	
+	char rb_string_before[BUF_SIZE]{'\0'};
+	bool string_fits = rb.to_string(rb_string_before, BUF_SIZE);
+	assert(string_fits);
+	
+	cout << "\ntest: " << test_name << "\n";
+	cout << "original: \n" << rb_string_before;	
+}
+
+void test_helper_print_after(RedBlackTree<int>& rb, char *expected) {
+
+	char rb_string_after[BUF_SIZE]{'\0'};
+	bool string_fits = rb.to_string(rb_string_after, BUF_SIZE);
+	assert(string_fits);
+	cout << "result: \n" << rb_string_after << "\n";
+	
+	bool OK = true;
+	OK &= are_strings_equal(expected, rb_string_after);	
+	cout << (OK ? "OK" : "ERROR") << "\n";
+	if (!OK) {
+		cout << "expected: \n" << expected;
+	}
+}
+
+
 
 void test_01() {
 	int test_key = 1;
@@ -47,7 +94,7 @@ void test_01() {
 	OK &= root != nullptr;
 	OK &= root->key == test_key;
 	
-	cout << "test: find root\n";	
+	cout << "\ntest: find root\n";	
 	cout << (OK ? "OK" : "ERROR") << "\n";	
 	cout << "\n";
 	
@@ -64,7 +111,7 @@ void test_02() {
 	OK &= rb.root->find(1) != nullptr;	
 	OK &= rb.root->find(-1) != nullptr;
 	
-	cout << "test: add and find 2 elements\n";
+	cout << "\ntest: add and find 2 elements\n";
 	cout << (OK ? "OK" : "ERROR") << "\n";	
 	cout << "\n";
 	
@@ -91,7 +138,7 @@ void test_03() {
 		OK &= out[i] == exp[i];
 	}	
 	
-	cout << "test: add 3 elements and output the keys in-order\n";
+	cout << "\ntest: add 3 elements and output the keys in-order\n";
 	cout << "result  : " << array_to_string<int>(out, array_count(out)) << "\n";
 	cout << "expected: " << array_to_string<int>(exp, array_count(exp)) << "\n";
 	cout << (OK ? "OK" : "ERROR") << "\n";	
@@ -126,7 +173,7 @@ void test_04(){
 		OK &= exp[i] == out[i];
 	}	
 	
-	cout << "test: add 6 elements with duplicates, 3 of which are duplicates\n";
+	cout << "\ntest: add 6 elements with duplicates, 3 of which are duplicates\n";
 	cout << (OK ? "OK" : "ERROR") << "\n";	
 	cout << "result  : " << array_to_string<int>(out, rb_count) << "\n";
 	cout << "expected: " << array_to_string<int>(exp, array_count(exp)) << "\n";	
@@ -151,43 +198,40 @@ void test_05(){
 	
 	rb.root->inorder_to_buf(out);
 	
-	cout << "test: add 6 elements unsorted, and output the keys in-order\n";
+	cout << "\ntest: add 6 elements unsorted, and output the keys in-order\n";
+	for (int i = 0 ; i < array_count(exp) ; ++i) {
+		OK &= exp[i] == out[i];
+	}
+	cout << (OK ? "OK" : "ERROR") << "\n";
 	cout << "result  : " << array_to_string<int>(out, array_count(out)) << "\n";
 	cout << "expected: " << array_to_string<int>(exp, array_count(exp)) << "\n";	
 	cout << "\n";
 }
 
 void test_06(){
+	char name[] = "shortest and longest path";
+	
 	RBTree<int> rb{0};	
-	print(&rb);
-	cout << "---\n";
 	rb.add(-1);
-	print(&rb);
-	cout << "---\n";
 	rb.add(-2);
-	print(&rb);
-	cout << "---\n";
 	rb.add(-3);
-	print(&rb);	
-	cout << "---\n";
 	rb.add(-4);
-	print(&rb);
-	cout << "---\n";
-	rb.add(-5);
-	print(&rb);
-	cout << "---\n";
-	
-	
-	bool OK = true;
+	rb.add(-5);	
 	
 	int out[6] = {};
 	rb.root->inorder_to_buf(out);
 	
-	int shortest_path_length = get_shortest_path_length<int>(rb.root);
+	int shortest_path_length = get_shortest_path_length<int>(rb.root);	
 	int longest_path_length = get_longest_path_length<int>(rb.root);
 	
-	cout << "test: shortest and longest path\n";
-	cout << array_to_string(out,array_count(out)) << "\n";
+	
+	cout << "\ntest: " << name << "\n";
+	bool OK = true;	
+	
+	print(&rb);
+	OK &= shortest_path_length == 2;
+	OK &= longest_path_length == 4;
+	cout << (OK ? "OK" : "ERROR") << "\n";
 	cout << "shortest: " << shortest_path_length << "\n";
 	cout << "longest: " << longest_path_length << "\n";
 	cout << "\n";
@@ -213,8 +257,12 @@ void test_07(){
 	int shortest_path_length = get_shortest_path_length<int>(rb.root);
 	int longest_path_length = get_longest_path_length<int>(rb.root);
 	
-	cout << "test: shortest and longest path\n";
-	cout << array_to_string(out,array_count(out)) << "\n";
+	cout << "\ntest: shortest and longest path\n";
+	cout << "sorted: " << array_to_string(out,array_count(out)) << "\n";	
+	print(&rb);
+	OK &= shortest_path_length == 2;
+	OK &= longest_path_length == 3;
+	cout << (OK ? "OK" : "ERROR") << "\n";
 	cout << "shortest: " << shortest_path_length << "\n";
 	cout << "longest: " << longest_path_length << "\n";
 	cout << "\n";
@@ -229,8 +277,12 @@ void test_08(){
 		rb.add(keys[i]);
 	}	
 	
-	cout << "test: red node\n";
+	cout << "\ntest: red node\n";
 	cout << array_to_string(keys, array_count(keys)) << '\n';
+	
+	bool OK = true;
+	OK &= rb.root->left->is_red;
+	cout << (OK ? "OK" : "ERROR") << "\n";
 	print(&rb);
 }
 
@@ -243,8 +295,28 @@ void test_09(){
 		rb.add(keys[i]);
 	}	
 	
-	cout << "test: print(tree)\n";
+	cout << "\ntest: print(tree)\n";
 	cout << array_to_string(keys, array_count(keys)) << '\n';
+	
+	bool OK = true;	
+	
+	char expected[] = 	"0\n"
+						"|-6\n"
+						" |-10\n"
+						" |-5\n"
+						"|5\n"
+						" |3\n"
+						" |8\n";
+	
+	char rb_string[BUF_SIZE]{'\0'};
+	bool string_fits = rb.to_string(rb_string, BUF_SIZE);
+	assert(string_fits);
+	
+	OK &= are_strings_equal(expected, rb_string);
+	cout << (OK ? "OK" : "ERROR") << "\n";
+	cout << "expected: \n" << expected;
+	cout << "result: \n" << rb_string << "\n";
+	
 	print(&rb);
 }
 
@@ -257,9 +329,31 @@ void test_10(){
 		rb.add(keys[i]);
 	}	
 	
-	cout << "test: \n";
+	cout << "\ntest: unordered test sequence\n";
 	cout << array_to_string(keys, array_count(keys)) << '\n';
-	print(&rb);
+	
+	char expected[] =	"M\n"
+						"|E\n"
+						" |C\n"
+						"  |*A\n"
+						" |L\n"
+						"  |*H\n"
+						"|R\n"
+						" |P\n"
+						" |X\n"
+						"  |*S\n";
+						
+	const int buf_size = 128;		
+	char rb_string[buf_size]{'\0'};	
+	bool string_fits = rb.to_string(rb_string, buf_size);
+	assert(string_fits);
+	
+	bool passed = true;
+	passed &= are_strings_equal(expected, rb_string);
+	
+	
+	cout << "result:\n" << rb_string;
+	cout << (passed ? "OK" : "ERROR") << "\n\n";
 }
 
 void test_11(){
@@ -271,10 +365,37 @@ void test_11(){
 		rb.add(keys[i]);
 	}	
 	
-	cout << "test: \n";
+	char expected[] =	"H\n"
+						"|C\n"
+						" |A\n"
+						" |E\n"
+						"|R\n"
+						" |*M\n"
+						"  |L\n"
+						"  |P\n"
+						" |X\n"
+						"  |*S\n";
+		
+	
+	cout << "\ntest: ordered test sequence\n";
 	cout << array_to_string(keys, array_count(keys)) << '\n';
-	print(&rb);
+	cout << "expected:\n" << expected;
+	
+	const int buf_size = 128;		
+	char rb_string[buf_size]{'\0'};	
+	bool string_fits = rb.to_string(rb_string, buf_size);
+	assert(string_fits);
+	
+	bool passed = true;
+	passed &= are_strings_equal(expected, rb_string);
+	
+	
+	cout << "result:\n" << rb_string;
+	cout << (passed ? "OK" : "ERROR") << "\n\n";
+	
+	
 }
+
 
 void test_12() {
 	/*
@@ -282,29 +403,42 @@ void test_12() {
 	0       -> 0
 	> *-1   -> > *-1	
 	*/
-	char name[] = "walk_down at root, root is 3-node (has red child)";
+	char name[] = "walk_down at root, root is 3-node (has red child) -> nothing to be done";
+	
 	int keys[] = {0,-1};
 	RBTree<int> rb = rb_from_keys<int>(keys, 2);
-	print_test(name, keys, 2, &rb);
-	rb.root->walk_down_step_root(-1);
-	print(&rb);
+	
+	char expected[] = 	"0\n"
+						"|*-1\n";
+	
+	test_helper_print_before(rb, name);
+	
+	rb.root->walk_down_step_root(-1);	
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 void test_13() {
-	/*
-	walk_down case root #1: both children are 2-nodes (no red children)
+	/*	
 	0       -> 0
 	> -1    -> > *-1
 	>  1    -> > * 1
 	*/
 	char name[] = "walk_down at root, both children 2-nodes";
 	int keys[] = {0,-1,1};
-	RBTree<int> rb = rb_from_keys<int>(keys, 3);	
-	print_test(name, keys, 3, &rb);
+	RBTree<int> rb = rb_from_keys<int>(keys, 3);		
+	
+	char expected[] = 	"0\n"
+						"|*-1\n"
+						"|*1\n";
+	
+	test_helper_print_before(rb, name);
+	
 	rb.root->walk_down_step_root(1);
-	print(&rb);
+	
+	test_helper_print_after(rb, expected);	
 	
 	return;
 }
@@ -320,10 +454,17 @@ void test_14() {
 	char name[] = "walk_down at root, right child is 3-node, target is greater (2) -> do nothing";
 	int keys[] = {0,-1,2,1};
 	RBTree<int> rb = rb_from_keys<int>(keys, 4);
-	print_test(name, keys, 4, &rb);
+	
+	char expected[] = 	"0\n"
+						"|-1\n"
+						"|2\n"
+						" |*1\n";
+	
+	test_helper_print_before(rb, name);
+	
 	rb.root->walk_down_step_root(2);
-	cout << "result: \n";
-	print(&rb);
+	
+	test_helper_print_after(rb, expected);	
 	
 	return;
 }
@@ -334,15 +475,26 @@ void test_15() {
 	char name[] = "replace_right(-2)";
 	int keys[] = {0,-1,1,-2};
 	RBTree<int> rb = rb_from_keys<int>(keys, 4);
-	print_test(name, keys, 4, &rb);
-	Node<int> *new_right = rb.root->left->left;
-	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
-	cout << "result: \n";
-	print(&rb);	
-	cout << "old right: \n";
-	//print<RedBlackTree<int>::Node *>(old_right); //template specialization not called
-	print_red_black_tree_node<int>(old_right);
 	
+	char expected[] = 	"0\n"
+						"|-1\n"
+						" |*-2\n"
+						"|*-2\n";
+						
+	test_helper_print_before(rb, name);
+	
+	Node<int> *new_right = rb.root->left->left;	
+	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
+	
+	test_helper_print_after(rb, expected);	
+	
+	bool OK = true;
+	OK &= old_right->key == 1 && old_right->is_red == false;
+	cout << "old right: " << (OK ? "OK" : "ERROR") << "\n";
+	print_red_black_tree_node<int>(old_right);
+	if (!OK) {
+		cout << "expected old_right: 1\n";
+	}
 	
 	return;
 }
@@ -351,15 +503,27 @@ void test_16() {
 	char name[] = "replace_right (-1) where right is nullptr";
 	int keys[] = {0,-1};
 	RBTree<int> rb = rb_from_keys<int>(keys, 2);
-	print_test(name, keys, 2, &rb);
+	
+	char expected[] = 	"0\n"
+						"|*-1\n"
+						"|*-1\n";
+						
+	test_helper_print_before(rb, name);
+	
 	Node<int> *new_right = rb.root->left;
 	RedBlackTree<int>::Node *old_right = rb.root->replace_right(new_right);
-	cout << "result: \n";
-	print(&rb);	
-	cout << "old right: \n";
-	//print<RedBlackTree<int>::Node *>(old_right); //template specialization not called
-	print_red_black_tree_node<int>(old_right);
 	
+	test_helper_print_after(rb, expected);	
+	
+	bool OK = true;
+	OK &= old_right == nullptr;
+	cout << "old right: " << (OK ? "OK" : "ERROR") << "\n";
+	print_red_black_tree_node<int>(old_right);
+	if (OK) {
+		cout << "<nullptr>\n";
+	} else {
+		cout << "expected old_right: <nullptr>\n";
+	}
 	
 	return;
 }
@@ -371,22 +535,29 @@ void test_17() {
 	 |*-2   -> |1
 	|1      ->  |*0
 	*/
-	char name[] = "walk_down at root, right child is 2-node, target is greater (1) -> scooch";
+	char name[] = "walk_down at root, left child is 2-node, target is greater (1) -> shift right";
 	int keys[] = {0,-1,1,-2};
 	RBTree<int> rb = rb_from_keys<int>(keys, 4);
-	print_test(name, keys, 4, &rb);
+	
+	
+	char expected[] = 	"-1\n"
+						"|-2\n"
+						"|1\n"
+						" |*0\n";
+						
+	test_helper_print_before(rb, name);
+	
 	rb.root->walk_down_step_root(1);
 	rb.update_root();
-	cout << "result: \n";
-	print(&rb);
+	
+	test_helper_print_after(rb, expected);	
 	
 	return;
 }
 
 
 void test_18() {
-	/*
-	walk_down case root #4: left child is 3_node, target on left side -> do nothing
+	/*	
 	0    
 	|-1  
 	 |*-2
@@ -395,10 +566,18 @@ void test_18() {
 	char name[] = "walk_down at root, left child is 3-node, target is less (-2) -> do nothing";
 	int keys[] = {0,-1,1,-2};
 	RBTree<int> rb = rb_from_keys<int>(keys, 4);
-	print_test(name, keys, 4, &rb);
+	
+	char expected[] = 	"0\n"
+						"|-1\n"
+						" |*-2\n"
+						"|1\n";
+						
+	test_helper_print_before(rb, name);
+	
+	
 	rb.root->walk_down_step_root(-2);
-	cout << "result: \n";
-	print(&rb);
+	
+	test_helper_print_after(rb, expected);	
 	
 	return;
 }
@@ -406,20 +585,26 @@ void test_18() {
 
 void test_19() {
 	/*
-	walk_down case root #5: left child is 2_node, target on left side -> scooch left
 	0		-> 1
 	|-1  	-> |0
 	|2      ->  |*-1
-	 |*1   ->  |2
+	 |*1    ->  |2
 	*/
-	char name[] = "walk_down at root, left child is 2-node, target is less (-1) -> scooch left";
+	char name[] = "walk_down at root, left child is 2-node, target is less (-1) -> shift left";
 	int keys[] = {0,-1,2,1};
 	RBTree<int> rb = rb_from_keys<int>(keys, 4);
-	print_test(name, keys, 4, &rb);
+	
+	char expected[] = 	"1\n"
+						"|0\n"
+						" |*-1\n"
+						"|2\n";
+						
+	test_helper_print_before(rb, name);
+	
 	rb.root->walk_down_step_root(-1);
 	rb.update_root();
-	cout << "result: \n";
-	print(&rb);
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -428,8 +613,8 @@ void test_19() {
 void test_20() {
 	/*	
 	0
-	|-2  <------
-	 |*-1
+	|-1  <------
+	 |*-2
 	|1
 	
 	*/
@@ -441,13 +626,16 @@ void test_20() {
 	
 	rb.root->left->debug_add_left(-2, true); //leaf
 	
+	char expected[] = 	"0\n"
+						"|-1\n"
+						" |*-2\n"
+						"|1\n";
+						
+	test_helper_print_before(rb, name);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	rb.root->left->walk_down_step(-2);
 	
-	cout << "result: \n";
-	print(&rb);
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -457,7 +645,7 @@ void test_21() {
 	walk_down case in-between #1:
 	p		-> p
 	|4      -> |4
-	 |*2     ->  |2
+	 |*2    ->  |2
 	  |1    ->   |*1
 	  |3    ->   |*3
 	 |5     -> |5
@@ -470,24 +658,30 @@ void test_21() {
 	rb.root->right->debug_add_left(2, true);
 	rb.root->right->debug_add_right(5, false);
 	rb.root->right->left->debug_add_left(1, false);
-	rb.root->right->left->debug_add_right(3, false);
+	rb.root->right->left->debug_add_right(3, false);	
+	rb.root->right->left->left->debug_add_left(0, false); //leaf	
 	
-	rb.root->right->left->left->debug_add_left(0, false); //leaf
-	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"-10\n"
+						"|4\n"
+						" |2\n"
+						"  |*1\n"
+						"   |0\n"
+						"  |*3\n"
+						" |5\n";
+						
+	test_helper_print_before(rb, name);
+
+	rb.root->right->left->left->walk_down_step(999); 
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 void test_22() {
 	/*
-	walk_down case in-between #2:
 	p		-> p
 	|5      -> |5
 	 |*2    ->  |*3
@@ -496,7 +690,7 @@ void test_22() {
 	   |*3	->	|4
 	 |6     -> |6
 	*/
-	char name[] = "walk_down between root and leaf: node (1) is 2-node (left child) with 3-node sibling -> scooch left";
+	char name[] = "walk_down between root and leaf: node (1) is 2-node (left child) with 3-node sibling -> shift left";
 	
 	RBTree<int> rb{-10};
 	
@@ -506,16 +700,26 @@ void test_22() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->left->right->debug_add_left(3, true);
 	rb.root->right->debug_add_right(6, false);
-	
 	rb.root->right->left->left->debug_add_left(0, false); //leaf below
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
-	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	cout << "current node: 1\n";
+	
+	char expected[] = 	"-10\n"
+						"|5\n"
+						" |*3\n"
+						"  |2\n"
+						"   |*1\n"
+						"    |0\n"
+						"  |4\n"
+						" |6\n";
+						
+	test_helper_print_before(rb, name);
+
+	rb.root->right->left->left->walk_down_step(999); 
+	
+	test_helper_print_after(rb, expected);
+
 	
 	return;
 }
@@ -523,8 +727,7 @@ void test_22() {
 
 void test_23() {
 	/*
-	walk_down case in-between #3:
-	p		-> p
+	p		-> -10
 	|4      -> |2
 	 |*2    ->  |1
 	  |1    ->  |4
@@ -542,14 +745,23 @@ void test_23() {
 	rb.root->right->left->debug_add_right(3, false);
 	
 	rb.root->right->right->debug_add_right(10, false); //leaf
-	
-	cout << "test: " << name << '\n';
-	print(&rb);
+
 	cout << "current node: 5\n";
-	rb.root->right->right->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	
+	char expected[] = 	"-10\n"
+						"|2\n"
+						" |1\n"
+						" |4\n"
+						"  |*3\n"
+						"  |*5\n"
+						"   |10\n";
+						
+	test_helper_print_before(rb, name);
+
+	rb.root->right->right->walk_down_step(999);
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -558,7 +770,7 @@ void test_23() {
 void test_24() {
 	/*
 	walk_down case in-between #4:
-	p		-> p
+	-10		-> -10
 	|5      -> |4
 	 |*2    ->  |*2
 	  |1    ->   |1
@@ -566,7 +778,7 @@ void test_24() {
 	   |*3	->	|6
 	 |6     ->   |*5
 	*/
-	char name[] = "walk_down between root and leaf: node (6) is 2-node (right child) with 3-node sibling -> scooch right";
+	char name[] = "walk_down between root and leaf: node (6) is 2-node (right child) with 3-node sibling -> shift right";
 	
 	RBTree<int> rb{-10};
 	
@@ -578,14 +790,22 @@ void test_24() {
 	rb.root->right->debug_add_right(6, false);
 	
 	rb.root->right->right->debug_add_right(10, false); //leaf below
-	
-	cout << "test: " << name << '\n';
-	print(&rb);
+		
 	cout << "current node: 6\n";
-	rb.root->right->right->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"-10\n"
+						"|4\n"
+						" |*2\n"
+						"  |1\n"
+						"  |3\n"
+						" |6\n"
+						"  |*5\n"
+						"  |10\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	rb.root->right->right->walk_down_step(999); 
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -594,8 +814,7 @@ void test_24() {
 
 void test_25() {
 	/*
-	walk_down case in-between #5:
-	p		-> p
+	p		-> -10
 	|4      -> |4
 	 |*1    ->  |1
 	  |0    ->   |*0
@@ -614,13 +833,21 @@ void test_25() {
 	
 	rb.root->right->left->right->debug_add_left(2, false); //leaf
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 3\n";
-	rb.root->right->left->right->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"-10\n"
+						"|4\n"
+						" |1\n"
+						"  |*0\n"
+						"  |*3\n"
+						"   |2\n"
+						" |5\n";
+						
+	test_helper_print_before(rb, name);		
+	
+	rb.root->right->left->right->walk_down_step(999); 
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -628,8 +855,7 @@ void test_25() {
 
 void test_26() {
 	/*
-	walk_down case in-between #6:
-	p		-> p
+	p		-> -10
 	|5      -> |5
 	 |*1    ->  |*1
 	  |0    ->   |0
@@ -637,7 +863,7 @@ void test_26() {
 	   |*2	->	  |*2
 	 |6     ->  |6 
 	*/
-	char name[] = "walk_down between root and leaf: node (3) is 2-node (middle child) with 3-node (left) sibling -> scooch right";
+	char name[] = "walk_down between root and leaf: node (3) is 3-node -> do nothing";
 	
 	RBTree<int> rb{-10};
 	
@@ -650,20 +876,28 @@ void test_26() {
 	
 	rb.root->right->left->right->debug_add_right(4, false); //leaf below
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 3\n";
-	rb.root->right->left->right->walk_down_step(999); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"-10\n"
+						"|5\n"
+						" |*1\n"
+						"  |0\n"
+						"  |3\n"
+						"   |*2\n"
+						"   |4\n"
+						" |6\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	rb.root->right->left->right->walk_down_step(999); 
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 void test_27() {
 	/*
-	walk_down case leaf #0:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -676,7 +910,7 @@ void test_27() {
 	 |9     ->  |9
 	 
 	*/
-	char name[] = "walk_down at leaf: node (-10) is right key in 3-node";
+	char name[] = "walk_down at leaf: node (-10) is right key in 3-node -> do nothing";
 	
 	RBTree<int> rb{0};
 	
@@ -690,13 +924,23 @@ void test_27() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->debug_add_right(9, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 10\n";
+	char expected[] = 	"0\n"
+						"|-5\n"
+						" |-10\n"
+						"  |*-11\n"
+						" |-3\n"
+						"|5\n"
+						" |*2\n"
+						"  |1\n"
+						"  |4\n"
+						" |9\n";
+						
+	test_helper_print_before(rb, name);	
+	
 	rb.root->left->left->walk_down_step(10); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -704,7 +948,6 @@ void test_27() {
 
 void test_28() {
 	/*
-	walk_down case leaf #1:
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
@@ -717,7 +960,7 @@ void test_28() {
 	 |9     ->  |9
 	 
 	*/
-	char name[] = "walk_down at leaf: node (-11) is left key in 3-node";
+	char name[] = "walk_down at leaf: node (-11) is left key in 3-node -> do nothing";
 	
 	RBTree<int> rb{0};
 	
@@ -731,30 +974,39 @@ void test_28() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->debug_add_right(9, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: -11\n";
-	rb.root->left->left->left->walk_down_step(-11); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"0\n"
+						"|-5\n"
+						" |-10\n"
+						"  |*-11\n"
+						" |-3\n"
+						"|5\n"
+						" |*2\n"
+						"  |1\n"
+						"  |4\n"
+						" |9\n";
+						
+	test_helper_print_before(rb, name);	
 	
+	rb.root->left->left->left->walk_down_step(-11); 
+	
+	test_helper_print_after(rb, expected);
 	return;
 }
 
 
 void test_29() {
-	/*
-	walk_down case leaf #2:
+	/*	
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
 	  |*-11 ->   |*-11    
 	 |-3    ->  |-3
 	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
+	 |*2    ->  |2
+	  |1    ->   |*1
+	  |4    ->   |*4
 	 |9     ->  |9
 	 
 	*/
@@ -772,13 +1024,24 @@ void test_29() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->debug_add_right(9, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 1\n";
-	rb.root->right->left->left->walk_down_step(1); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"0\n"
+						"|-5\n"
+						" |-10\n"
+						"  |*-11\n"
+						" |-3\n"
+						"|5\n"
+						" |2\n"
+						"  |*1\n"
+						"  |*4\n"
+						" |9\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	rb.root->right->left->left->walk_down_step(1);
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
@@ -786,20 +1049,19 @@ void test_29() {
 
 void test_30() {
 	/*
-	walk_down case leaf #3:
 	0		-> 0
-	|-5     -> |-5 
+	|-5     -> |-5
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
-	  |*-11 ->   |*-11    
+	  |*-11 ->   |*-11
 	 |-3    ->  |-3
-	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
-	 |9     ->  |9
+	|5      -> |2
+	 |*2    ->  |1
+	  |1    ->  |5
+	  |4    ->   |*4
+	 |9     ->   |*9
 	 
 	*/
-	char name[] = "walk_down at leaf: 2-node with 2-node sibling: (9) is right child of black node -> squash";
+	char name[] = "walk_down at leaf: 2-node with 2-node sibling: (9) is right child of black node -> far_squash";
 	
 	RBTree<int> rb{0};
 	
@@ -813,30 +1075,40 @@ void test_30() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->debug_add_right(9, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 9\n";
+	
+	char expected[] = 	"0\n"
+						"|-5\n"
+						" |-10\n"
+						"  |*-11\n"
+						" |-3\n"
+						"|2\n"
+						" |1\n"
+						" |5\n"
+						"  |*4\n"
+						"  |*9\n";
+						
+	test_helper_print_before(rb, name);	
+	
 	rb.root->right->right->walk_down_step(9); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 
 void test_31() {
-	/*
-	walk_down case leaf #4:
+	/*	
 	0		-> 0
 	|-5     -> |-5 
 	 |-10   ->  |-10      <-------leaf = right key in 3-node
 	  |*-11 ->   |*-11    
 	 |-3    ->  |-3
 	|5      -> |5
-	 |*2    ->  |*2
-	  |1    ->   |1
-	  |4    ->   |4
+	 |*2    ->  |2
+	  |1    ->   |*1
+	  |4    ->   |*4
 	 |9     ->  |9
 	 
 	*/
@@ -854,21 +1126,32 @@ void test_31() {
 	rb.root->right->left->debug_add_right(4, false);
 	rb.root->right->debug_add_right(9, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 4\n";
-	rb.root->right->left->right->walk_down_step(4); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"0\n"
+						"|-5\n"
+						" |-10\n"
+						"  |*-11\n"
+						" |-3\n"
+						"|5\n"
+						" |2\n"
+						"  |*1\n"
+						"  |*4\n"
+						" |9\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	
+	rb.root->right->left->right->walk_down_step(4); 
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 
 void test_32() {	
-		/*
-	walk_down case leaf #5:
+	/*
 	0		-> 0
 	|*-5    -> |*-4 
 	 |-10   ->  |-5      <-------leaf = right key in 3-node
@@ -876,7 +1159,7 @@ void test_32() {
 	  |*-4  ->  |-3
 	|5      -> |5
 	*/
-	char name[] = "walk_down at leaf: 2-node with 3-node sibling: (-10) is left child (of black node) -> scooch left";
+	char name[] = "walk_down at leaf: 2-node with 3-node sibling: (-10) is left child (of black node) -> shift left";
 	
 	RBTree<int> rb{0};
 	
@@ -885,21 +1168,27 @@ void test_32() {
 	rb.root->left->debug_add_right(-3, false);
 	rb.root->left->right->debug_add_left(-4, true);
 	rb.root->debug_add_right(5, false);
-	
-	cout << "test: " << name << '\n';
-	print(&rb);
+		
 	cout << "current node: -10\n";
-	rb.root->left->left->walk_down_step(-10); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"0\n"
+						"|*-4\n"
+						" |-5\n"
+						"  |*-10\n"
+						" |-3\n"
+						"|5\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	rb.root->left->left->walk_down_step(-10);
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 void test_33() {
-		/*
-	walk_down case leaf #6:
+	/*
 	0		-> 0		
 	|*-4 	-> |*-5    
 	 |-5   	->  |-10   
@@ -907,7 +1196,7 @@ void test_33() {
 	 |-3	->   |*-4   <----------
 	|5		-> |5      
 	*/
-	char name[] = "walk_down at leaf: 2-node (-3) is middle child (right child of red parent) with left sibling being a 3-node";
+	char name[] = "walk_down at leaf: 2-node (-3) is middle child (right child of red parent) with left sibling being a 3-node -> shift_right";
 	
 	RBTree<int> rb{0};
 	
@@ -917,20 +1206,26 @@ void test_33() {
 	rb.root->left->debug_add_right(-3, false);
 	rb.root->debug_add_right(5, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: -3\n";
-	rb.root->left->right->walk_down_step(-3); //target doesn't matter for in-between case
 	
-	cout << "result: \n";
-	print(&rb);
+	char expected[] = 	"0\n"
+						"|*-5\n"
+						" |-10\n"
+						" |-3\n"
+						"  |*-4\n"
+						"|5\n";
+						
+	test_helper_print_before(rb, name);	
+	
+	rb.root->left->right->walk_down_step(-3);
+	
+	test_helper_print_after(rb, expected);
 	
 	return;
 }
 
 void test_34() {
 		/*
-	walk_down case leaf #7:
 	0		-> -3
 	|*-5    -> |*-5 
 	 |-10   ->  |-10
@@ -938,7 +1233,7 @@ void test_34() {
 	  |*-4  -> |5
 	|5      ->  |*0 	<---------------(5)
 	*/
-	char name[] = "walk_down at leaf: 2-node (5) is right child (of black node) with 3-node sibling: -> scooch right";
+	char name[] = "walk_down at leaf: 2-node (5) is right child (of black node) with 3-node sibling: -> shift right";
 	
 	RBTree<int> rb{0};
 	
@@ -948,16 +1243,43 @@ void test_34() {
 	rb.root->left->right->debug_add_left(-4, true);
 	rb.root->debug_add_right(5, false);
 	
-	cout << "test: " << name << '\n';
-	print(&rb);
 	cout << "current node: 5\n";
+	
+	char expected[] = 	"-3\n"
+						"|*-5\n"
+						" |-10\n"
+						" |-4\n"
+						"|5\n"
+						" |*0\n";
+						
+	test_helper_print_before(rb, name);	
+	
 	rb.root->right->walk_down_step(5); //target doesn't matter for in-between case
 	rb.update_root();
 	
-	cout << "result: \n";
-	print(&rb);
+	test_helper_print_after(rb, expected);
 	
 	return;
+}
+
+void test_35(){
+	char name[] = "StringBuffer test";
+	
+	StringBuffer buf{128};
+	
+	RBTree<int> rb{0};
+	rb.root->debug_add_left(-5, true);
+	rb.root->left->debug_add_left(-10, false);
+	rb.root->left->debug_add_right(-3, false);
+	rb.root->left->right->debug_add_left(-4, true);
+	rb.root->debug_add_right(5, false);
+	
+	cout << "\ntest: " << name << '\n';
+	
+	traverse_and_print_nodes_to<int>(&buf, rb.root);
+	buf.print();
+	return;
+	
 }
 
 
@@ -993,7 +1315,7 @@ int main() {
 	test_22();
 	test_23();
 	test_24();
-	
+
 	test_25();
 	test_26();
 	
@@ -1006,6 +1328,8 @@ int main() {
 	test_33();
 	test_34();
 	
+	// test_35(); //print test
+
 	return 0;
 }
 

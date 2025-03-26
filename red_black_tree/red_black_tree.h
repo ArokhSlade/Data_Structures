@@ -1,6 +1,9 @@
 #include <cassert>
 #include <cstdio>
 
+#include<string>
+#include<sstream>
+
 template<typename T>
 T min(const T& a, const T& b) {
 	T result = b < a ? b : a;
@@ -72,6 +75,7 @@ struct RedBlackTree {
 	void add(const Tval& new_val);
 	Node *walk_down(Tval target_key);
 	void update_root();
+	bool to_string(char *out, int size);
 	
 	RedBlackTree(Tval key_)
 	:root{new Node{key_}}
@@ -464,6 +468,160 @@ void print(RedBlackTree<Tval> *tree) {
 
 
 
+
+struct StringBuffer{
+	char *base;
+	int fill;
+	int cap;
+	
+	StringBuffer(int cap_) 
+	: base{new char[cap_]{0}}, fill{0}, cap{cap_}
+	{
+		for (char *cur = base; cur < base+cap ; ++cur){
+			assert(*cur == '\0');
+		}
+	}
+	
+	~StringBuffer(){
+		delete[] base;
+	}
+	
+	int space(bool with_null = true) {
+		int result = cap - fill;
+		return result;
+	}
+	
+	char *get_buf() {
+		char *result = (space() > 0) ? base + fill : nullptr;
+		return result;
+	}
+	
+	void modify_fill(int fill_change){
+		fill += fill_change;
+		return;
+	}
+	
+	bool full() {		
+		return fill >= cap;
+	}
+	
+	template<typename T>
+	bool put(T value);
+	
+	void print() {
+		printf(base);
+	}
+	
+};
+
+//@return true if value was printed completely
+template<class T> bool StringBuffer::put(T value) {
+	assert(false);
+	return false;
+}
+
+template <class Tval>
+bool traverse_and_print_nodes_to(StringBuffer *buf, typename RedBlackTree<Tval>::Node *tree, int indent = 0) {
+	if (!tree) {
+		return true;
+	}
+	if (!buf || buf->full()) {
+		return false;
+	}
+	
+	bool no_errors = true;
+	
+	for (int i = 0 ; i < indent-1 ; ++i) {
+		no_errors &= buf->put(' ');
+	}
+	
+	if (indent != 0) {
+		no_errors &= buf->put('|');
+	}
+	
+	if(tree->is_red) {
+		no_errors &= buf->put('*');
+	}
+	no_errors &= buf->put(tree->key);
+	no_errors &= buf->put('\n');
+	
+	if (!buf->full()) no_errors &= traverse_and_print_nodes_to<Tval>(buf, tree->left, indent+1);
+	if (!buf->full()) no_errors &= traverse_and_print_nodes_to<Tval>(buf, tree->right, indent+1);
+	
+	return no_errors;
+}
+
+template <> bool StringBuffer::put(char c) {	
+	char *buf_mem = get_buf();
+	if (buf_mem) {
+		sprintf(buf_mem, "%c", c);
+		modify_fill(1);
+		return true;
+	}		
+	return false;
+}
+
+template <> bool StringBuffer::put(int i) {
+	
+	char *buf_mem = get_buf();
+	if (buf_mem) {
+		/* NOTE(Gerald, 2025 03 26):
+		   https://en.cppreference.com/w/cpp/io/c/fprintf
+		   on snprintf return value:
+		   """ 
+		   4) Number of characters that would have been written for a sufficiently large buffer if successful (not including the terminating null character), or a negative value if an error occurred. Thus, the (null-terminated) output has been completely written if and only if the returned value is nonnegative and less than buf_size. """
+		 */
+		int space_before = space();
+		int return_code = snprintf(buf_mem, space_before, "%d", i);
+		bool write_successful = return_code >= 0 && return_code < space_before;		
+		if (write_successful) {
+			int chars_written = return_code;
+			modify_fill(chars_written);			
+			return true;
+		} else {
+			if (return_code > 0) {
+				//didn't fit
+				assert(return_code >= space_before);
+				fill = cap;	
+			} else {
+				// and "error occcured" in snprintf
+				assert(false);
+			}
+		}
+	}	
+	return false;
+}
+
+
+
+
+
+
+// template <typename T>
+// void RedBlackTree<T>::to_string_step(typename RedBlackTree<T>::Node node, StringBuffer *buf, int indent = 0) {
+	
+	
+	// return
+// }
+
+template <typename Tval>
+bool RedBlackTree<Tval>::to_string(char *out, int size){
+	
+	StringBuffer buf{size};
+	
+	bool fits = traverse_and_print_nodes_to<Tval>(&buf, root);
+	
+	if (fits) {
+		for (char *src = buf.base, *dst = out ; src <= buf.base+buf.fill ; ++src, ++dst) {
+			*dst = *src;
+		}
+	}
+	
+	return fits;
+}
+
+
+
 /*
 10
 |-10
@@ -548,12 +706,22 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::replace_left(RedBlackTree<T>::Node
 
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift_right() {
-	assert(left && left->is_3_node() && right && right->is_2_node());
-	//assert(parent);
+	assert(left && left->is_3_node() && right && right->is_2_node());	
 	
 	Node *replacement = left;
 	rotate_right();
+	
+	assert(parent->left->is_red);
+	parent->left->is_red = false;
+	
 	rotate_left();
+	
+	if (is_black()) {
+		is_red = true;
+	} else {
+		assert(parent->parent->is_black());
+		parent->parent->is_red = true;
+	}
 	
 	return replacement;	
 }
@@ -561,11 +729,21 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift_right() {
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::shift_left() {
 	assert(left && left->is_2_node() && right && right->is_3_node());
-	//assert(parent);
+	
 	
 	right->rotate_right();
 	rotate_left();
 	Node *replacement = parent;
+	assert(parent->is_red && left->is_black());
+	left->is_red = true;
+	
+	assert(parent->is_red);
+	if (is_red) {
+		is_red = false;
+	} else {
+		parent->is_red = false;
+	}
+	
 	
 	return replacement;	
 }
@@ -594,7 +772,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::far_shift() {
 	rotate_right(); //become the right child of my left child.
 	Node *replacement = parent;
 	rotate_left();
-	is_red = false;
+	is_red = true;
 	
 	return replacement;
 }
@@ -614,6 +792,10 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::far_squash() {
 	
 	rotate_right();
 	squash();	
+	
+	assert(parent->is_red);
+	parent->is_red = false;
+	
 	Node *replacement = parent;
 	
 	return replacement;
