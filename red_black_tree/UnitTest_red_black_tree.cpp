@@ -1321,16 +1321,16 @@ void test_36() {
 	print(&rb);
 	
 	rb.remove(-5);
-	cout << "remove 9\n";
+	cout << "remove -5\n";
 	print(&rb);
 	
 	rb.remove(-10);
-	cout << "remove 9\n";
+	cout << "remove -10\n";
 	print(&rb);
 	
 
 	rb.remove(2);
-	cout << "remove 9\n";
+	cout << "remove 2\n";
 	print(&rb);
 	
 	return;

@@ -41,12 +41,14 @@ struct RedBlackTree {
 		bool is_black();
 		bool is_root();
 		bool is_leaf();
-		bool is_3_node();
 		bool is_2_node();
+		bool is_3_node();
+		bool is_4_node();
 		Node *get_sibling();
 		Node *get_far_sibling();
-		Node *fix_up();
-		Node *fix_up_until(Node *);
+		Node *fix_up_add();
+		Node *fix_up_remove_until(Node *);
+		void fix_up_remove_step();
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
 		Node *replace_child(Node *old_child, Node *new_child);
@@ -172,7 +174,7 @@ void RedBlackTree<Tval>::Node::append_leaf(RedBlackTree::Node *node){
 	
 	if (!node) return;
 	RedBlackTree::Node *insertion_parent = get_insertion_parent( node->key );
-	insertion_parent->attach_child(node);
+	insertion_parent->attach_child(node);	
 	
 	return;
 }
@@ -204,6 +206,13 @@ bool RedBlackTree<Tval>::Node::is_3_node(){
 	assert(!right || !right->is_red); //don't call this function during transformations.
 	
 	bool result = left && left->is_red;
+	return result;
+}
+
+template<typename Tval>
+bool RedBlackTree<Tval>::Node::is_4_node(){
+	
+	bool result = (left && right && left->is_red && right->is_red);
 	return result;
 }
 
@@ -302,8 +311,8 @@ void RedBlackTree<Tval>::Node::rotate_left(){
 }
 
 template<typename Tval>
-RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {	
-	assert(is_red);	
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up_add() {	
+	assert(is_red);
 	//NOTE(Gerald): we track the highest node in the tree that is affected
 	//we return it so tree can check if it's the new root and update if needed
 	Node *highest_changed = this; 
@@ -315,6 +324,7 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 	
 	assert(parent);
 	
+	
 	if (parent->is_black()) {
 		if (parent->left == this) {
 			//highest_changed = this
@@ -325,7 +335,7 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 				//highest_changed = this
 			} else { //parent->left is red
 				parent->flip_colors_with_children();
-				highest_changed = parent->fix_up();
+				highest_changed = parent->fix_up_add();
 			}
 		}		
 	} else { //parent is red
@@ -333,63 +343,68 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up() {
 			assert(parent->parent);
 			parent->parent->rotate_right();
 			is_red = false;
-			highest_changed = parent->fix_up();
+			highest_changed = parent->fix_up_add();
 		} else { // this is right child
 			parent->rotate_left();
 			parent->rotate_right();
 			left->is_red = false;
-			highest_changed = fix_up();
+			highest_changed = fix_up_add();
 		}
 	}
 	return highest_changed;
 }
 
+
 template<typename Tval>
-RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up_until(typename RedBlackTree<Tval>::Node *limit) {	
-	assert(is_red);	
-	
-	if (this == limit) {
-		return this;
-	}
-	//NOTE(Gerald): we track the highest node in the tree that is affected
-	//we return it so tree can check if it's the new root and update if needed
-	//TODO(Gerald): this shouldn't be necessary because we expect to stop before some limit node, thus never affecting the root
-	Node *highest_changed = this; 
-	
+void RedBlackTree<Tval>::Node::fix_up_remove_step() {
 	if (is_root()) {
-		is_red = false;
-		return highest_changed;
+		if (is_red) {
+			//case should only occur with 3 or more nodes in tree
+			assert((left && right && left->is_black() && right->is_black()));
+			is_red = false;
+		} else { //is black
+			if (is_4_node()) {
+				flip_colors_with_children();
+			}
+		}
+		return;
 	}
 	
-	assert(parent);
-	
-	if (parent->is_black()) {
-		if (parent->left == this) {
-			//highest_changed = this
-		} else { // this is right child
-			if (!parent->left || parent->left->is_black()) {
-				parent->rotate_left();
-				left->flip_colors_with_parent();
-				//highest_changed = this
-			} else { //parent->left is red
-				parent->flip_colors_with_children();
-				highest_changed = parent->fix_up_until(limit);
-			}
-		}		
-	} else { //parent is red
-		if (parent->left == this) {			
-			assert(parent->parent);
-			parent->parent->rotate_right();
-			is_red = false;
-			highest_changed = parent->fix_up_until(limit);
-		} else { // this is right child
+	if (is_red) {
+		assert(parent->is_black());
+		if (parent->left && parent->left->is_red == parent->right->is_red) {
+			//parent is 4-node
+			parent->flip_colors_with_children();
+		} else if (parent->right == this) { //right-leaning 3-node
 			parent->rotate_left();
-			parent->rotate_right();
-			left->is_red = false;
-			highest_changed = fix_up_until(limit);
+			left->flip_colors_with_parent();
+		} else { //i am red child in left-leaning 3-node
+			//nothing to do
+		}
+	} else { //is black 		
+		if (is_4_node()) {
+			// i am 4-node
+			flip_colors_with_children();
+		} else {
+			//nothing to do
 		}
 	}
-	return highest_changed;
+	return;
+}
+
+template<typename Tval>
+RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up_remove_until(typename RedBlackTree<Tval>::Node *limit) {	
+	
+	Node *current = this;
+	Node *highest_visited = this->parent;
+	
+	while(current && current != limit) {		
+		current->fix_up_remove_step();
+		highest_visited = current;
+		current = current->parent;
+	}
+	
+	return highest_visited;
 }
 
 
@@ -406,7 +421,7 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::add(const Tval& new_val) {
 	new_node->is_red = true;
 	append_leaf( new_node );
 	
-	highest_changed = new_node->fix_up();
+	highest_changed = new_node->fix_up_add();
 	
 	return highest_changed;
 }
@@ -414,16 +429,61 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::add(const Tval& new_val) {
 template<class T>
 //TODO: what if replacement has different color than original?
 RedBlackTree<T>::Node *RedBlackTree<T>::remove(const T& target_key) {
-	Node *target_node = walk_down(target_key); 
 	Node *replacement = nullptr;
+	
+	Node *target_node = walk_down(target_key);
+	
 	if (target_node->is_leaf()) {
-		replacement = target_node->remove_leaf();		
+		replacement = target_node->remove_leaf();
+	} else if (target_node->is_4_node() ){
+		replacement = target_node->right;
+		replacement->is_red = false;
+		replacement->replace_left(target_node->left);
+		
+		replacement->parent = target_node->parent;
+		if (target_node->parent) {
+			target_node->parent->replace_child(target_node, replacement);
+		}
+		
+		target_node->left = nullptr;
+		target_node->right = nullptr;
 	} else {
-		target_node->right->enforce_degree_greater_2();
-		replacement = target_node->right->remove_min_under_3_node();
-		target_node->replace_with(replacement);		
+		Node *near_succ = target_node->right;
+		near_succ->enforce_degree_greater_2();
+		while (near_succ->left == target_node) {
+			
+			target_node = near_succ->walk_down_step(target_key);
+			if (target_node->is_leaf()) {
+				break;
+			} else {
+				near_succ = target_node->right;
+				near_succ->enforce_degree_greater_2();
+			}
+		}
+		if (target_node->is_leaf()) {
+			replacement = target_node->remove_leaf();			
+		} else if (target_node->is_4_node() ){
+			replacement = target_node->right;
+			replacement->is_red = false;
+			replacement->replace_left(target_node->left);
+			
+			replacement->parent = target_node->parent;
+			if (target_node->parent) {
+				target_node->parent->replace_child(target_node, replacement);
+			}
+			
+			target_node->left = nullptr;
+			target_node->right = nullptr;
+		} else {
+			replacement = near_succ->remove_min_under_3_node();
+			target_node->replace_with(replacement);		
+		}
+	} 
+	Node *new_root = replacement->fix_up_remove_until(nullptr);
+	while (new_root->parent) {
+		new_root = new_root->parent;
 	}
-	replacement->fix_up();
+	root = new_root;
 	return target_node;
 }
 
@@ -1024,7 +1084,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_min_under_3_node(){
 	}
 	assert(current->is_red && current->parent->left == current);
 	current->parent->left = nullptr;
-	current->parent->fix_up_until(this);
+	current->parent->fix_up_remove_until(this);
 	current->parent = nullptr;
 	return current;
 }
@@ -1047,7 +1107,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend_left(){
 template<class T>
 RedBlackTree<T>::Node *RedBlackTree<T>::walk_down(T target_key) {
 	Node *target_node = root->walk_down_step_root(target_key);
-	target_node = root->walk_down_step(target_key);
+	target_node = target_node->walk_down_step(target_key);
 	
 	return target_node;
 }
