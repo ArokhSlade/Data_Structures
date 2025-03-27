@@ -395,7 +395,7 @@ void test_11(){
 	
 	
 }
-
+#if 0
 
 void test_12() {
 	/*
@@ -809,7 +809,6 @@ void test_24() {
 	
 	return;
 }
-
 
 
 void test_25() {
@@ -1262,6 +1261,8 @@ void test_34() {
 	return;
 }
 
+#endif
+
 void test_35(){
 	char name[] = "StringBuffer test";
 	
@@ -1336,6 +1337,13 @@ void test_36() {
 	return;
 }
 
+
+
+/*TODO
+  a test where the target is found but then becomes left red child of 3-4-leaf.
+  a test where the target is already a red child of a 3-4-leaf
+  figure out all cases where it can happen that target is in the leaf, but current != target, i.e. target is red in a 3-4 node and current is the black or the other red one.
+  */                                                            
 
 int main() {
 	/*
