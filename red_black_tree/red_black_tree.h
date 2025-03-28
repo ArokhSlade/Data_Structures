@@ -461,7 +461,16 @@ RedBlackTree<T>::Node *RedBlackTree<T>::remove(const T& target_key) {
 		root = nullptr;
 		delete root;
 	} else if (root->child_count() == 1) {
-		root->remove_key_from_2_3_4_leaf(target_key);
+		assert(root->left);
+		if (root->key == target_key) {
+			Node * new_root = root->left;
+			root = nullptr;
+			delete root;
+			root = new_root;
+		} else {
+			delete root->left;
+			root->left = nullptr;
+		}		
 	} else {
 		if (root->key == target_key) {
 			removed_node = root;
