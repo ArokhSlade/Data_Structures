@@ -1334,6 +1334,30 @@ void test_36() {
 	cout << "remove 2\n";
 	print(&rb);
 	
+	rb.remove(4);
+	cout << "remove 4\n";
+	print(&rb);
+	
+	rb.remove(-3);
+	cout << "remove -3\n";
+	print(&rb);
+	
+	rb.remove(1);
+	cout << "remove 1\n";
+	print(&rb);
+	
+	rb.remove(5);
+	cout << "remove 5\n";
+	print(&rb);
+	
+	rb.remove(11);
+	cout << "remove 11\n";
+	print(&rb);
+	
+	rb.remove(0);
+	cout << "remove 0\n";
+	print(&rb);
+	
 	return;
 }
 

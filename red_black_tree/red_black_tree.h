@@ -1,8 +1,10 @@
-#include <cassert>
+
 #include <cstdio>
 
 #include<string>
 #include<sstream>
+
+#define assert(condition) if(!(condition)) {*(int *)0 = 0;}
 
 template<typename T>
 T min(const T& a, const T& b) {
@@ -52,6 +54,7 @@ struct RedBlackTree {
 		Node *get_sibling();
 		Node *get_far_sibling();
 		Node *fix_up_add();
+		Node *fix_up_root();
 		void fix_up();
 		Node *replace_right(Node *);
 		Node *replace_left(Node *);
@@ -416,6 +419,8 @@ bool RedBlackTree<T>::Node::is_in_3_4_leaf() {
 	 bool result = false;
 	 result = result || (is_red && parent && parent->is_black() && !left && !right);
 	 result = result || (is_black() && child_count() == 2 && left->is_red && right->is_red && left->is_leaf() && right->is_leaf());
+	 result = result || (is_black() && child_count() == 1 && left && left->is_red);
+	 assert(child_count()!=1 || left);
 	 return result;
 }
 
@@ -433,37 +438,6 @@ bool RedBlackTree<T>::Node::key_exists_in_2_3_4_node(const T& target_key) {
 	result = result || right && right->key == target_key;
 	
 	return result;
-}
-
-template<typename T>
-RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_key_from_3_4_leaf(const T& target_key) {	
-	assert(is_in_3_4_leaf());
-	key_exists_in_2_3_4_node(target_key);
-	
-	Node *removed_node = this;
-	if (key == target_key) {
-		if (right) {
-			assert(is_black());
-			rotate_left();
-			parent->is_red = false;
-			parent->replace_left(left);
-		} else if (left) {
-			assert(is_black());
-			left->parent = nullptr;
-			left->is_red = false;
-			if (parent) {
-				parent->replace_child(this, left);
-			}
-		} else {
-			parent->replace_child(this, nullptr);
-		}
-		parent = right = left = nullptr;
-	} else if (is_leaf()) {
-		removed_node = parent->get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
-	} else {
-		removed_node = get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
-	}
-	return removed_node;
 }
 
 template<class T>
@@ -503,11 +477,10 @@ RedBlackTree<T>::Node *RedBlackTree<T>::remove(const T& target_key) {
 	return removed_node;
 }
 
-
 template<typename T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend(typename RedBlackTree<T>::Node **node_to_remove_ptr, const T& target_key) {
 	Node *current = this;
-	while ( ! (current->is_in_3_4_leaf() && (current->key == target_key || current->is_leaf() ))) {
+	while ( ! (current->is_in_3_4_leaf() && (current->key == target_key || current->is_leaf() ) && *node_to_remove_ptr)) {
 		assert(*node_to_remove_ptr || !current->is_leaf() || current->key == target_key);
 		current->make_3_4_node();
 		if (current->key == target_key){
@@ -524,14 +497,56 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend(typename RedBlackTree<T>::
 
 template<typename T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::turn_back(typename RedBlackTree<T>::Node *node_to_remove) {
-	assert(is_in_3_4_leaf());
-	Node *ascent_start = get_sibling() ? get_sibling() : parent;
-	if (this != node_to_remove) {
-		node_to_remove->replace_with(this);
-		assert(ascent_start != node_to_remove);		
-	}
+	assert(is_in_3_4_leaf());	
+	
+	Node *ascent_start = is_red ? parent : left;
+	
+	Node *old_parent = parent;
 	remove_key_from_3_4_leaf(this->key);
+	
+	if (this != node_to_remove) {
+		
+		if (ascent_start == node_to_remove) {
+			assert(ascent_start == old_parent) {
+				ascent_start = this;
+			}
+		}
+		is_red = node_to_remove->is_red;
+		node_to_remove->replace_with(this);
+	}
+	
 	return ascent_start;
+}
+
+template<typename T>
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_key_from_3_4_leaf(const T& target_key) {	
+	assert(is_in_3_4_leaf());
+	key_exists_in_2_3_4_node(target_key);
+	
+	Node *removed_node = this;
+	if (key == target_key) {
+		if (right) {
+			assert(is_black());
+			rotate_left();
+			parent->is_red = false;
+			parent->replace_left(left);
+		} else if (left) {
+			assert(is_black());
+			left->parent = nullptr;
+			left->is_red = false;
+			if (parent) {
+				parent->replace_child(this, left);
+			}
+		} else {
+			parent->replace_child(this, nullptr);
+		}
+		parent = right = left = nullptr;
+	} else if (is_leaf()) {
+		removed_node = parent->get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
+	} else {
+		removed_node = get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
+	}
+	return removed_node;
 }
 
 template<typename T>
@@ -541,16 +556,35 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::ascend(typename RedBlackTree<T>::N
 		current->fix_up();
 		current = current->parent;
 	}
-	return current;
+	Node *new_root = current->fix_up_root();
+	return new_root;
 }
 
 template<typename T>
-void RedBlackTree<T>::Node::fix_up() {	
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::fix_up_root() {
+	assert(is_root());
+	if (is_black()) {
+		if (is_4_node()) {
+			flip_colors_with_children();
+		} else if (right && right->is_red) {
+			assert(left);
+			rotate_left();
+			parent->is_red = false;
+			is_red = true;
+			return parent;
+		}		
+	}
+	return this;
+}
+
+template<typename T>
+void RedBlackTree<T>::Node::fix_up() {		
 	if (is_black()) {		
-		return;
-	}	
-	
-	if (parent->is_black()) {		
+		if (right && right->is_red) {
+			assert(left && left->is_red);
+			flip_colors_with_children();
+		}
+	} else if (parent->is_black()) {		
 	
 		if (parent->is_4_node()) {
 			parent->flip_colors_with_children();
