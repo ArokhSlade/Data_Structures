@@ -484,7 +484,8 @@ RedBlackTree<T>::Node *RedBlackTree<T>::remove(const T& target_key) {
 template<typename T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend(typename RedBlackTree<T>::Node **node_to_remove_ptr, const T& target_key) {
 	Node *current = this;
-	while ( !current->is_in_3_4_leaf() && !*node_to_remove_ptr) {
+	while ( ! (current->is_in_3_4_leaf() && (current->key == target_key || current->is_leaf() ))) {
+		assert(*node_to_remove_ptr || !current->is_leaf() || current->key == target_key);
 		current->make_3_4_node();
 		if (current->key == target_key){
 			*node_to_remove_ptr = current;			
@@ -494,6 +495,7 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend(typename RedBlackTree<T>::
 		}
 		current = current->get_nearest(target_key);
 	}
+	assert(current->is_in_3_4_leaf() && (current->key == target_key || current->is_leaf()));
 	return current;	
 }
 
