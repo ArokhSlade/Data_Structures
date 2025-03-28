@@ -47,8 +47,8 @@ struct RedBlackTree {
 		bool is_3_node();
 		bool is_4_node();
 		bool is_in_3_4_leaf();
-		bool is_in_2_3_4_leaf();
-		Node *remove_key_from_2_3_4_leaf(const Tval& target_key);
+		bool key_exists_in_2_3_4_node(const Tval& target_key);
+		Node *remove_key_from_3_4_leaf(const Tval& target_key);
 		Node *get_sibling();
 		Node *get_far_sibling();
 		Node *fix_up_add();
@@ -409,11 +409,6 @@ RedBlackTree<Tval>::Node *RedBlackTree<Tval>::Node::fix_up_add() {
 }
 
 
-template<typename T>
-bool RedBlackTree<T>::Node::is_in_2_3_4_leaf() {
-	 bool result = !right || right->is_red;
-	 return result;
-}
 
 template<typename T>
 //TODO: shorten this
@@ -425,18 +420,37 @@ bool RedBlackTree<T>::Node::is_in_3_4_leaf() {
 }
 
 
+template<typename T>
+bool RedBlackTree<T>::Node::key_exists_in_2_3_4_node(const T& target_key) {
+	if (is_red) {
+		return parent->key_exists_in_2_3_4_node(target_key);
+	}
+	
+	bool result = false;
+	
+	result = result || key == target_key;
+	result = result || left && left->key == target_key;
+	result = result || right && right->key == target_key;
+	
+	return result;
+}
 
 template<typename T>
-RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_key_from_2_3_4_leaf(const T& target_key) {	
-	assert(is_in_2_3_4_leaf());
+RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_key_from_3_4_leaf(const T& target_key) {	
+	assert(is_in_3_4_leaf());
+	key_exists_in_2_3_4_node(target_key);
 	
 	Node *removed_node = this;
 	if (key == target_key) {
 		if (right) {
+			assert(is_black());
 			rotate_left();
-			right->replace_left(left);
+			parent->is_red = false;
+			parent->replace_left(left);
 		} else if (left) {
+			assert(is_black());
 			left->parent = nullptr;
+			left->is_red = false;
 			if (parent) {
 				parent->replace_child(this, left);
 			}
@@ -445,9 +459,9 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::remove_key_from_2_3_4_leaf(const T
 		}
 		parent = right = left = nullptr;
 	} else if (is_leaf()) {
-		return removed_node = nullptr;
+		removed_node = parent->get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
 	} else {
-		removed_node = get_nearest(target_key)->remove_key_from_2_3_4_leaf(target_key);
+		removed_node = get_nearest(target_key)->remove_key_from_3_4_leaf(target_key);
 	}
 	return removed_node;
 }
@@ -510,13 +524,13 @@ RedBlackTree<T>::Node *RedBlackTree<T>::Node::descend(typename RedBlackTree<T>::
 
 template<typename T>
 RedBlackTree<T>::Node *RedBlackTree<T>::Node::turn_back(typename RedBlackTree<T>::Node *node_to_remove) {
-	assert(is_in_2_3_4_leaf());
+	assert(is_in_3_4_leaf());
 	Node *ascent_start = get_sibling() ? get_sibling() : parent;
 	if (this != node_to_remove) {
 		node_to_remove->replace_with(this);
 		assert(ascent_start != node_to_remove);		
 	}
-	remove_key_from_2_3_4_leaf(this->key);
+	remove_key_from_3_4_leaf(this->key);
 	return ascent_start;
 }
 
