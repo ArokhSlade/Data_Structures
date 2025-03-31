@@ -3,4 +3,7 @@ Data Structures
 
 Trie (Prefix Tree)
 
-Heap
+Heap 
+
+Red-Black-Tree
+- /documentation has pictures!
